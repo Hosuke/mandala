@@ -1,0 +1,416 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   金胎不二 · 紺紙金泥之設色
+   紺青為地，金泥為線，朱為點睛。題簽縱書，如奉一卷裝裱之曼荼羅。
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --kon: #0a0e1a;          /* 紺青之地 */
+  --kon-deep: #060912;
+  --gold: #d8b36a;         /* 金泥 */
+  --gold-dim: #a8854a;
+  --gold-faint: rgba(216, 179, 106, .28);
+  --shu: #c4502f;          /* 朱 */
+  --moon: #e9e2cf;         /* 月白 */
+  --ink-soft: rgba(233, 226, 207, .62);
+  --cjk: "LXGW WenKai TC", "Songti TC", serif;
+  --latin: "Cormorant Garamond", Georgia, serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--kon-deep);
+  color: var(--moon);
+  font-family: var(--cjk);
+  -webkit-font-smoothing: antialiased;
+}
+
+#gl {
+  position: fixed;
+  inset: 0;
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+#gl:active { cursor: grabbing; }
+
+/* 砂子 · 紙肌 */
+#grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  opacity: .05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* 裱框 */
+#frame {
+  position: fixed;
+  inset: 10px;
+  pointer-events: none;
+  z-index: 20;
+  border: 1px solid var(--gold-faint);
+  outline: 1px solid rgba(216, 179, 106, .1);
+  outline-offset: 4px;
+}
+
+/* 題簽 · 縱書 */
+#title {
+  position: fixed;
+  top: 34px;
+  right: 36px;
+  z-index: 22;
+  writing-mode: vertical-rl;
+  pointer-events: none;
+  user-select: none;
+}
+#title h1 {
+  font-size: 31px;
+  font-weight: 500;
+  letter-spacing: .42em;
+  color: var(--gold);
+  text-shadow: 0 0 22px rgba(216, 179, 106, .45);
+}
+#title p {
+  margin-right: 12px;
+  font-size: 12px;
+  letter-spacing: .5em;
+  color: var(--gold-dim);
+  opacity: .85;
+}
+
+/* 界相 · 左上 */
+#realm {
+  position: fixed;
+  top: 34px;
+  left: 38px;
+  z-index: 22;
+  pointer-events: none;
+  user-select: none;
+}
+#realm-name {
+  display: block;
+  font-size: 21px;
+  letter-spacing: .34em;
+  color: var(--ink-soft);
+  transition: color .8s;
+}
+#realm-sub {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--latin);
+  font-size: 11px;
+  letter-spacing: .34em;
+  color: var(--gold-dim);
+  opacity: .7;
+}
+body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179,106,.5); }
+
+/* 四鈕 · 縱書右列 */
+#controls {
+  position: fixed;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+#controls button {
+  writing-mode: vertical-rl;
+  font-family: var(--cjk);
+  font-size: 16px;
+  letter-spacing: .3em;
+  padding: 16px 9px;
+  color: var(--ink-soft);
+  background: rgba(10, 14, 26, .55);
+  border: 1px solid var(--gold-faint);
+  border-radius: 2px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: all .35s;
+}
+#controls button:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 18px rgba(216, 179, 106, .25);
+}
+#controls button.lit {
+  color: var(--kon-deep);
+  background: var(--gold);
+  border-color: var(--gold);
+  text-shadow: none;
+}
+
+/* 不二滑尺 */
+#slider-wrap {
+  position: fixed;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: min(520px, 62vw);
+}
+#slider-wrap .end {
+  font-size: 15px;
+  letter-spacing: .22em;
+  color: var(--gold-dim);
+  white-space: nowrap;
+  user-select: none;
+}
+.slider-track {
+  position: relative;
+  flex: 1;
+}
+.slider-track .mid {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: .4em;
+  text-indent: .4em;
+  color: var(--gold-dim);
+  opacity: .8;
+  user-select: none;
+}
+.slider-track .mid::after {
+  content: "";
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  height: 8px;
+  width: 1px;
+  background: var(--gold-faint);
+}
+#lambda {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-dim));
+  outline: none;
+  cursor: pointer;
+}
+#lambda::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #f4e6c0, var(--gold) 60%, var(--gold-dim));
+  border: 1px solid rgba(244, 230, 192, .8);
+  box-shadow: 0 0 14px rgba(216, 179, 106, .65);
+}
+#lambda::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--gold);
+  border: 1px solid #f4e6c0;
+  box-shadow: 0 0 14px rgba(216, 179, 106, .65);
+}
+
+/* 法語 */
+#caption {
+  position: fixed;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 22;
+  width: min(620px, 78vw);
+  text-align: center;
+  pointer-events: none;
+  transition: opacity .6s;
+}
+#caption.hidden { opacity: 0; }
+#caption.pulse #caption-title { animation: rise .9s ease both; }
+#caption.pulse #caption-text { animation: rise .9s .15s ease both; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+#caption-head {
+  font-size: 11px;
+  letter-spacing: .5em;
+  color: var(--shu);
+  margin-bottom: 8px;
+}
+#caption-title {
+  font-size: 23px;
+  font-weight: 500;
+  letter-spacing: .3em;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+#caption-text {
+  font-size: 14.5px;
+  line-height: 1.9;
+  color: var(--ink-soft);
+}
+
+/* 尊位牌 */
+#info {
+  position: fixed;
+  left: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 23;
+  width: 252px;
+  padding: 26px 24px 22px;
+  background: rgba(8, 11, 20, .82);
+  border: 1px solid var(--gold-faint);
+  border-radius: 2px;
+  backdrop-filter: blur(10px);
+  transition: opacity .45s, transform .45s;
+}
+#info.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) translateX(-14px);
+}
+#info-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--gold-dim);
+  font-size: 17px;
+  cursor: pointer;
+}
+#info-bija {
+  font-family: var(--latin);
+  font-size: 46px;
+  font-weight: 600;
+  font-style: italic;
+  line-height: 1.1;
+  text-shadow: 0 0 24px currentColor;
+}
+#info-name {
+  margin-top: 8px;
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: .18em;
+  color: var(--moon);
+}
+#info-sk {
+  font-family: var(--latin);
+  font-size: 13px;
+  font-style: italic;
+  letter-spacing: .06em;
+  color: var(--gold-dim);
+  margin-top: 3px;
+}
+#info-family {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 2px 10px;
+  font-size: 11.5px;
+  letter-spacing: .3em;
+  text-indent: .3em;
+  border: 1px solid;
+  border-radius: 999px;
+}
+#info-loc {
+  margin-top: 12px;
+  font-size: 12.5px;
+  letter-spacing: .12em;
+  color: var(--gold-dim);
+  line-height: 1.8;
+}
+#info-desc {
+  margin-top: 10px;
+  font-size: 13.5px;
+  line-height: 1.95;
+  color: var(--ink-soft);
+}
+#info-mantra {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--gold-faint);
+  font-family: var(--latin);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--gold-dim);
+  line-height: 1.7;
+}
+
+/* 浮名 */
+#tooltip {
+  position: fixed;
+  z-index: 24;
+  padding: 4px 12px;
+  font-size: 13px;
+  letter-spacing: .2em;
+  color: var(--gold);
+  background: rgba(8, 11, 20, .85);
+  border: 1px solid var(--gold-faint);
+  border-radius: 2px;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity .2s;
+}
+#tooltip.hidden { opacity: 0; }
+
+/* 提示 */
+#hint {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 21;
+  font-size: 11px;
+  letter-spacing: .3em;
+  color: rgba(168, 133, 74, .55);
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* 開卷 */
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--kon-deep);
+  transition: opacity 1.4s ease;
+}
+#loading.done { opacity: 0; pointer-events: none; }
+#loading .seed {
+  font-size: 44px;
+  letter-spacing: .5em;
+  text-indent: .5em;
+  color: var(--gold);
+  text-shadow: 0 0 34px rgba(216, 179, 106, .6);
+  animation: breathe 2.6s ease-in-out infinite;
+}
+#loading .sub {
+  font-family: var(--latin);
+  font-size: 12px;
+  letter-spacing: .5em;
+  color: var(--gold-dim);
+}
+@keyframes breathe {
+  0%, 100% { opacity: .55; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 720px) {
+  #title { top: 22px; right: 20px; }
+  #title h1 { font-size: 23px; }
+  #realm { top: 22px; left: 22px; }
+  #controls { right: 20px; }
+  #info { left: 16px; width: 218px; }
+  #slider-wrap { width: 74vw; bottom: 30px; }
+}

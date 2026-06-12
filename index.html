@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>金胎不二 · 兩部曼荼羅引擎</title>
+  <meta name="description" content="大悲胎藏與金剛界：同一規範圖之兩種投影。形變即不二，遍歷即上下轉，入壇即羯磨。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=LXGW+WenKai+TC&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="gl"></canvas>
+
+  <div id="frame"></div>
+  <div id="grain"></div>
+
+  <header id="title">
+    <h1>金胎不二</h1>
+    <p>兩部曼荼羅引擎</p>
+  </header>
+
+  <div id="realm">
+    <span id="realm-name">大悲胎藏</span>
+    <span id="realm-sub">GARBHADHĀTU</span>
+  </div>
+
+  <nav id="controls">
+    <button id="btn-descent" title="下轉門：佛成為世界之路">下轉</button>
+    <button id="btn-ascent" title="上轉門：眾生成佛之路">上轉</button>
+    <button id="btn-enter" title="入壇：法曼荼羅轉為羯磨曼荼羅">入壇</button>
+    <button id="btn-reset" title="復觀：還於俯瞰">復觀</button>
+  </nav>
+
+  <div id="caption" class="hidden">
+    <div id="caption-head"></div>
+    <h2 id="caption-title"></h2>
+    <p id="caption-text"></p>
+  </div>
+
+  <div id="slider-wrap">
+    <span class="end">胎藏</span>
+    <div class="slider-track">
+      <span class="mid">不二</span>
+      <input id="lambda" type="range" min="0" max="1000" value="0" aria-label="兩部之間">
+    </div>
+    <span class="end">金剛</span>
+  </div>
+
+  <div id="hint">拖曳旋觀 · 滾輪遠近 · 點尊得詳</div>
+
+  <aside id="info" class="hidden">
+    <button id="info-close" aria-label="閉">×</button>
+    <div id="info-bija"></div>
+    <h2 id="info-name"></h2>
+    <p id="info-sk"></p>
+    <span id="info-family"></span>
+    <p id="info-loc"></p>
+    <p id="info-desc"></p>
+    <p id="info-mantra"></p>
+  </aside>
+
+  <div id="tooltip" class="hidden"></div>
+
+  <div id="loading">
+    <div class="seed">金胎不二</div>
+    <div class="sub">RYŌBU MAṆḌALA</div>
+  </div>
+
+  <noscript style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#d8b36a;background:#060912;">
+    此壇城需 JavaScript 而現。
+  </noscript>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
