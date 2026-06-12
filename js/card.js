@@ -1,0 +1,129 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 結緣之證：投花所得之尊，作一紙可攜之券。720×1080，紺紙金泥之製。
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, desc }) {
+  const W = 720, H = 1080;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  // 紺地
+  let g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0c1120');
+  g.addColorStop(0.5, '#0a0e1a');
+  g.addColorStop(1, '#060912');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // 金砂子
+  for (let i = 0; i < 240; i++) {
+    const x = Math.random() * W, y = Math.random() * H;
+    ctx.fillStyle = `rgba(233,205,138,${Math.random() * 0.28})`;
+    ctx.beginPath();
+    ctx.arc(x, y, Math.random() * 1.5 + 0.3, 0, 7);
+    ctx.fill();
+  }
+
+  // 裱框（雙線）
+  ctx.strokeStyle = 'rgba(216,179,106,0.85)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(26, 26, W - 52, H - 52);
+  ctx.strokeStyle = 'rgba(216,179,106,0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(38, 38, W - 76, H - 76);
+
+  ctx.textAlign = 'center';
+
+  // 題
+  ctx.fillStyle = '#a8854a';
+  ctx.font = '500 26px "LXGW WenKai TC", serif';
+  ctx.fillText('金 胎 不 二', W / 2, 108);
+  ctx.font = '600 13px "Cormorant Garamond", serif';
+  ctx.fillStyle = 'rgba(168,133,74,0.8)';
+  ctx.fillText('R Y Ō B U   M A Ṇ Ḍ A L A', W / 2, 136);
+
+  // 月輪
+  const cy = 400, R = 195;
+  g = ctx.createRadialGradient(W / 2, cy, R * 0.1, W / 2, cy, R);
+  g.addColorStop(0, '#1d2438');
+  g.addColorStop(0.8, '#131a2c');
+  g.addColorStop(1, '#0d1322');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(W / 2, cy, R, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#d8b36a';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(W / 2, cy, R, 0, 7); ctx.stroke();
+  ctx.strokeStyle = colorHex;
+  ctx.globalAlpha = 0.85;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.arc(W / 2, cy, R * 0.9, 0, 7); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // 種字
+  ctx.fillStyle = colorHex;
+  ctx.shadowColor = colorHex;
+  ctx.shadowBlur = 30;
+  ctx.textBaseline = 'middle';
+  if (sid) {
+    let fs = 190;
+    ctx.font = `400 ${fs}px "Noto Sans Siddham"`;
+    const w = ctx.measureText(sid).width;
+    if (w > R * 1.35) { fs *= (R * 1.35) / w; ctx.font = `400 ${fs}px "Noto Sans Siddham"`; }
+    ctx.fillText(sid, W / 2, cy - 22);
+  } else {
+    ctx.font = '600 150px "Cormorant Garamond", serif';
+    ctx.fillText(roman, W / 2, cy - 22);
+  }
+  ctx.shadowBlur = 8;
+  ctx.globalAlpha = 0.8;
+  ctx.font = 'italic 600 34px "Cormorant Garamond", serif';
+  ctx.fillText(roman, W / 2, cy + R * 0.62);
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+  ctx.textBaseline = 'alphabetic';
+
+  // 尊名
+  ctx.fillStyle = '#e9e2cf';
+  ctx.font = '500 52px "LXGW WenKai TC", serif';
+  ctx.fillText(zh, W / 2, 712);
+  ctx.fillStyle = '#a8854a';
+  ctx.font = 'italic 600 24px "Cormorant Garamond", serif';
+  ctx.fillText(sk || '', W / 2, 752);
+
+  // 部族
+  ctx.strokeStyle = colorHex;
+  ctx.fillStyle = colorHex;
+  ctx.lineWidth = 1.2;
+  ctx.font = '500 20px "LXGW WenKai TC", serif';
+  const fw = ctx.measureText(familyZh).width + 44;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(W / 2 - fw / 2, 778, fw, 38, 19);
+  else ctx.rect(W / 2 - fw / 2, 778, fw, 38); // 舊器無圓角，方亦可
+  ctx.stroke();
+  ctx.fillText(familyZh, W / 2, 805);
+
+  // 行狀
+  if (desc) {
+    ctx.fillStyle = 'rgba(233,226,207,0.66)';
+    ctx.font = '400 21px "LXGW WenKai TC", serif';
+    ctx.fillText(desc, W / 2, 868);
+  }
+  if (mantra) {
+    ctx.fillStyle = 'rgba(168,133,74,0.92)';
+    ctx.font = 'italic 500 21px "Cormorant Garamond", serif';
+    ctx.fillText(mantra, W / 2, 910);
+  }
+
+  // 跋
+  const d = new Date();
+  const dateStr = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+  ctx.fillStyle = 'rgba(168,133,74,0.7)';
+  ctx.font = '400 18px "LXGW WenKai TC", serif';
+  ctx.fillText(`投花得佛 · ${dateStr}`, W / 2, 986);
+  ctx.font = '400 15px "LXGW WenKai TC", serif';
+  ctx.fillStyle = 'rgba(168,133,74,0.5)';
+  ctx.fillText('結 緣 之 證', W / 2, 1014);
+
+  return c.toDataURL('image/png');
+}

@@ -354,6 +354,66 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   line-height: 1.7;
 }
 
+/* 蒙眼之幕 */
+#veil {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #04060c;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .55s ease;
+}
+#veil.on { opacity: .97; }
+#veil span {
+  font-size: 22px;
+  letter-spacing: .65em;
+  text-indent: .65em;
+  color: var(--gold-dim);
+}
+
+/* 結緣之行 */
+#bond-line {
+  display: block;
+  margin-top: 14px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-bottom: 1px dashed var(--gold-faint);
+  font-family: var(--cjk);
+  font-size: 13px;
+  letter-spacing: .18em;
+  color: var(--gold-dim);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color .3s;
+}
+#bond-line:hover { color: var(--gold); }
+#bond-line.hidden { display: none; }
+
+/* 取證 */
+#info-card {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 9px 0;
+  font-family: var(--cjk);
+  font-size: 13.5px;
+  letter-spacing: .3em;
+  text-indent: .3em;
+  color: var(--gold);
+  background: rgba(216, 179, 106, .08);
+  border: 1px solid var(--gold-faint);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all .3s;
+}
+#info-card:hover { background: var(--gold); color: var(--kon-deep); }
+#info-card.hidden { display: none; }
+
 /* 浮名 */
 #tooltip {
   position: fixed;

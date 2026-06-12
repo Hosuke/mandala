@@ -17,8 +17,11 @@ export function initUI(h) {
   btnDescent.addEventListener('click', () => h.onTraverse('descent'));
   btnAscent.addEventListener('click', () => h.onTraverse('ascent'));
   btnEnter.addEventListener('click', () => h.onEnter());
+  $('btn-toss').addEventListener('click', () => h.onToss());
   $('btn-reset').addEventListener('click', () => h.onReset());
   $('info-close').addEventListener('click', () => api.hideInfo());
+  $('info-card').addEventListener('click', () => h.onCard());
+  $('bond-line').addEventListener('click', () => h.onBondClick());
 
   window.addEventListener('keydown', e => {
     if (e.code === 'ArrowLeft') h.onLambda(Math.max(0, lambda.value / 1000 - 0.04), true);
@@ -92,7 +95,35 @@ export function initUI(h) {
       info.classList.remove('hidden');
     },
 
-    hideInfo() { info.classList.add('hidden'); },
+    hideInfo() {
+      info.classList.add('hidden');
+      $('info-card').classList.add('hidden');
+    },
+
+    showCardButton(on) { $('info-card').classList.toggle('hidden', !on); },
+
+    setBond(text) {
+      const el = $('bond-line');
+      el.classList.toggle('hidden', !text);
+      if (text) el.textContent = text;
+    },
+
+    announce(head, title, text) {
+      clearTimeout(captionTimer);
+      $('caption-head').textContent = head;
+      $('caption-title').textContent = title;
+      $('caption-text').textContent = text;
+      caption.classList.remove('hidden');
+      caption.classList.remove('pulse');
+      void caption.offsetWidth;
+      caption.classList.add('pulse');
+    },
+
+    veilFlash(text, ms = 1300) {
+      $('veil-text').textContent = text;
+      $('veil').classList.add('on');
+      setTimeout(() => $('veil').classList.remove('on'), ms);
+    },
 
     tooltip(x, y, text) {
       if (!text) { tooltip.classList.add('hidden'); return; }

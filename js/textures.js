@@ -507,6 +507,33 @@ export function glowTexture(color = 0xe9cd8a) {
   return tex;
 }
 
+// 投花之瓣
+export function petalTexture() {
+  const key = 'petal';
+  if (cache.has(key)) return cache.get(key);
+  const S = 128, c = canvas(S), ctx = c.getContext('2d');
+  ctx.translate(S / 2, S / 2);
+  const g = ctx.createLinearGradient(0, S * 0.3, 0, -S * 0.35);
+  g.addColorStop(0, 'rgba(216,179,106,0.25)');
+  g.addColorStop(0.6, 'rgba(233,205,138,0.75)');
+  g.addColorStop(1, 'rgba(244,230,192,0.95)');
+  ctx.fillStyle = g;
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = GOLD;
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.moveTo(0, S * 0.32);
+  ctx.bezierCurveTo(-S * 0.3, S * 0.1, -S * 0.22, -S * 0.22, 0, -S * 0.36);
+  ctx.bezierCurveTo(S * 0.22, -S * 0.22, S * 0.3, S * 0.1, 0, S * 0.32);
+  ctx.fill();
+  ctx.stroke();
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  cache.set(key, tex);
+  return tex;
+}
+
 export function ringTexture(color = '#d8b36a') {
   const key = `ring|${color}`;
   if (cache.has(key)) return cache.get(key);

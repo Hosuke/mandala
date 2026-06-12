@@ -17,7 +17,8 @@ import {
   morphTargets, assemblyEchoes, taizoEdges, kongoEdges,
   spiralCurve, cellCenter, assemblyByKey, CELL,
 } from './layout.js';
-import { deityTexture, labelTexture, glowTexture, ringTexture } from './textures.js';
+import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture } from './textures.js';
+import { bondCard } from './card.js';
 import { stepTweens, tween, smoothstep, damp } from './anim.js';
 import { Rig } from './camera.js';
 import { Traversal } from './traversal.js';
@@ -166,6 +167,19 @@ async function boot() {
   pulse.renderOrder = 2;
   scene.add(pulse);
 
+  // ── 投花得佛 ──
+  const petals = [];
+  const petalGeo = new THREE.PlaneGeometry(0.85, 0.85); // 共用，免漏
+  let bondNode = null;
+  let bondSide = null; // 結緣當時之側（t|k），名隨緣定，不隨滑尺改
+  let tossTimer = null;
+  const bondGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture(0xf4e0a8), transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending, opacity: 0,
+  }));
+  bondGlow.renderOrder = 6;
+  scene.add(bondGlow);
+
   // ── 介面 ──
   const ui = initUI({
     onLambda(v, reflect) {
@@ -185,13 +199,24 @@ async function boot() {
       ui.traversalUI(true, dir);
     },
     onEnter() { toggleEnter(!state.entered); },
+    onToss() {
+      if (tossTimer) return;
+      if (!state.entered) {
+        toggleEnter(true);
+        tossTimer = setTimeout(() => { tossTimer = null; doToss(); }, 2200);
+      } else doToss();
+    },
+    onCard() { if (bondNode) downloadCard(bondNode); },
+    onBondClick() { if (bondNode) showInfo(bondNode); },
     onReset() {
+      cancelToss();
       if (trav.active) trav.stop();
       if (state.entered) toggleEnter(false);
       rig.resetView();
       ui.hideInfo();
     },
     onEscape() {
+      cancelToss();
       if (state.entered) toggleEnter(false);
       else if (trav.active) trav.stop();
       else ui.hideInfo();
@@ -221,8 +246,106 @@ async function boot() {
     },
   });
 
+  function cancelToss() {
+    if (tossTimer) { clearTimeout(tossTimer); tossTimer = null; }
+  }
+
+  function doToss() {
+    if (!state.entered) return; // 儀軌中途被撤，不擲
+    ui.veilFlash('閉 目 擲 花');
+    setTimeout(() => {
+      if (!state.entered) return;
+      const fwd = new THREE.Vector3();
+      camera.getWorldDirection(fwd);
+      fwd.y = 0;
+      if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1);
+      fwd.normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), (Math.random() - 0.5) * 1.3);
+      const speed = 6.5 + Math.random() * 7.5;
+      const mesh = new THREE.Mesh(
+        petalGeo,
+        new THREE.MeshBasicMaterial({
+          map: petalTexture(), transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        }),
+      );
+      mesh.renderOrder = 6;
+      mesh.position.copy(camera.position).addScaledVector(fwd, 1.4);
+      scene.add(mesh);
+      petals.push({
+        mesh,
+        vel: new THREE.Vector3(fwd.x * speed, 4.2 + Math.random() * 2.6, fwd.z * speed),
+        spin: 5 + Math.random() * 4,
+      });
+    }, 750);
+  }
+
+  function resolveBond(pos) {
+    let best = null, bd = Infinity;
+    for (const n of nodes) {
+      if (n.mesh.material.opacity < 0.25) continue;
+      const d2 = (n.group.position.x - pos.x) ** 2 + (n.group.position.z - pos.z) ** 2;
+      if (d2 < bd) { bd = d2; best = n; }
+    }
+    if (!best) return;
+    bondNode = best;
+    bondSide = best.hasT && best.hasK
+      ? (effLambda(best) < 0.5 ? 't' : 'k')
+      : (best.hasT ? 't' : 'k');
+    try {
+      localStorage.setItem('mandala-bond', JSON.stringify({ id: best.d.id, side: bondSide }));
+    } catch { /* 私隱模式無妨 */ }
+    const name = (bondSide === 't' ? best.d.t : best.d.k).zh;
+    ui.setBond(`結緣之尊 · ${name}`);
+    ui.announce('投花得佛', `花落 · ${name}`, '花不擇尊，尊已待汝。自今而後，此尊與汝相應。');
+    ui.hideCaption(9000);
+    showInfo(best);
+    if (state.entered) {
+      // 轉面其尊
+      const g = best.group.position;
+      rig.yaw = Math.atan2(-(g.z - rig.fpPos.z), g.x - rig.fpPos.x) - PI / 2;
+      rig.pitch = 0.05;
+    }
+  }
+
+  function downloadCard(node) {
+    const { d } = node;
+    // 結緣之尊取結緣當時之側；餘者隨當前之界
+    const side = node === bondNode && bondSide
+      ? bondSide
+      : node.hasT && node.hasK
+        ? (effLambda(node) < 0.5 ? 't' : 'k')
+        : (node.hasT ? 't' : 'k');
+    const aspect = side === 't' ? d.t : d.k;
+    const url = bondCard({
+      sid: siddham(aspect.bija), roman: aspect.bija,
+      zh: aspect.zh, sk: aspect.sk,
+      familyZh: FAMILY_ZH[d.family],
+      colorHex: '#' + FAMILY_COLOR[d.family].toString(16).padStart(6, '0'),
+      mantra: d.mantra, desc: d.desc,
+    });
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `結緣之證-${aspect.zh}.png`;
+    a.click();
+  }
+
+  // 復緣（前世所投之花）
+  try {
+    const saved = localStorage.getItem('mandala-bond');
+    if (saved) {
+      let id = saved, side = null;
+      try { ({ id, side } = JSON.parse(saved)); } catch { /* 舊式裸 id */ }
+      const node = nodeById[id];
+      if (node) {
+        bondNode = node;
+        bondSide = side === 'k' && node.hasK ? 'k' : node.hasT ? 't' : 'k';
+        ui.setBond(`結緣之尊 · ${(bondSide === 't' ? node.d.t : node.d.k).zh}`);
+      }
+    }
+  } catch { /* 私隱模式無妨 */ }
+
   function toggleEnter(on) {
     if (on === state.entered) return;
+    if (!on) cancelToss(); // 出壇即罷投
     state.entered = on;
     if (on) {
       if (trav.active) trav.stop();
@@ -298,6 +421,7 @@ async function boot() {
       family: FAMILY_ZH[d.family], familyColor: color,
       loc, desc: d.desc, mantra: d.mantra,
     });
+    ui.showCardButton(ref === bondNode); // 證卡唯結緣之尊可取
   }
 
   // ── 主迴圈 ──
@@ -390,6 +514,30 @@ async function boot() {
       pulse.material.opacity = damp(pulse.material.opacity, 0.5 + Math.sin(elapsed * 2.6) * 0.18, 6, dt);
     } else {
       pulse.material.opacity = damp(pulse.material.opacity, 0, 6, dt);
+    }
+
+    // 花行於空
+    for (let i = petals.length - 1; i >= 0; i--) {
+      const p = petals[i];
+      p.vel.y -= 6.5 * dt; // 緩落，花非石也
+      p.mesh.position.addScaledVector(p.vel, dt);
+      p.mesh.rotation.x += p.spin * dt;
+      p.mesh.rotation.z += p.spin * 0.6 * dt;
+      if (p.mesh.position.y <= 0.75) {
+        const at = p.mesh.position.clone();
+        scene.remove(p.mesh);
+        p.mesh.material.dispose();
+        petals.splice(i, 1);
+        resolveBond(at);
+      }
+    }
+    // 結緣之光
+    if (bondNode) {
+      bondGlow.position.copy(bondNode.group.position);
+      bondGlow.position.y += 0.3;
+      bondGlow.material.opacity = (0.3 + Math.sin(elapsed * 2.2) * 0.13) *
+        Math.max(0.25, bondNode.mesh.material.opacity);
+      bondGlow.scale.setScalar(bondNode.mesh.scale.x * 1.9 + Math.sin(elapsed * 2.2) * 0.4);
     }
 
     dust.update(dt, elapsed);
