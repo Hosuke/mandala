@@ -35,5 +35,10 @@ open http://localhost:8000
 ## 技術
 
 Three.js r160（已 vendor）· 原生 ES modules · 零構建 · 零圖片資源。
+
+## 協議
+
+本作（代碼・程序圖像・尊位數據・文本）以 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 行世：署名、非商用、相同方式共享。`vendor/three.module.js` 依其原 MIT 協議。
+
 字體：LXGW WenKai TC（寫經之楷）＋ Cormorant Garamond（梵字羅馬轉寫），經 Google Fonts 載入——
 此為唯一外部依賴；斷網時引擎照常運行，字體退化為系統 serif。嚴格離線部署者可自行 vendor 字體並改 `index.html` 之 font links。
