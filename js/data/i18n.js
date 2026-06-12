@@ -1,0 +1,463 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 三語之層：中（原文）· EN（清簡法語體）· 日（文語調）。
+// 壇上之字不譯——尊名月輪、院會名牌、悉曇種字是圖像之一部，如絹本金泥之題字。
+// 此處所譯者：界面、法語、行狀、觀文——「釋義」之層。
+// 日語凡與漢字原文同形者（鈕面、院會名），缺位即落回中文，非遺漏也。
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const LANGS = ['zh', 'en', 'ja'];
+
+const NUM_ZH = '一二三四五六七八九';
+
+// ── 界面字 ──────────────────────────────────────────────────────────────────
+const UI_ZH = {
+  descent: '下轉', ascent: '上轉', stop: '止',
+  enter: '入壇', exit: '出壇', toss: '投花',
+  kan: '觀法', kanExit: '出觀',
+  soundOff: '默', soundOn: '音', reset: '復觀',
+  sliderT: '胎藏', sliderK: '金剛', sliderMid: '不二',
+  hintAerial: '拖曳旋觀 · 滾輪遠近 · 點尊得詳',
+  hintFP: '拖曳環顧 · WASD 行於壇中 · Esc 出壇',
+  hintKan: '輕觸以進 · 觀無促令 · Esc 出觀',
+  realms: ['大悲胎藏', '不　二', '金剛界'],
+  headDescent: '下轉門', headAscent: '上轉門',
+  headToss: '投花得佛',
+  tossTitle: n => `花落 · ${n}`,
+  tossText: '花不擇尊，尊已待汝。自今而後，此尊與汝相應。',
+  bondPrefix: n => `結緣之尊 · ${n}`,
+  veilToss: '閉 目 擲 花',
+  headForm: '四種曼荼羅 · 轉相',
+  headKan: i => `五相成身觀 · 第${NUM_ZH[i]}相`,
+  kanExitTitle: '出觀',
+  kanExitText: '觀已，壇城如故，汝亦如故——而非故。',
+  cardBtn: '結緣之證 ↓',
+  num: (i, n) => `${NUM_ZH[i]}／${NUM_ZH[n - 1]}`,
+  locT: '胎藏', locK: '金剛界', jojin: '成身會',
+  dual: (a, b) => `兩部同體：${a} 即 ${b}`,
+  cardFoot1: d => `投花得佛 · ${d}`,
+  cardFoot2: '結 緣 之 證',
+  cardDate: d => `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`,
+  cardFile: n => `結緣之證-${n}.png`,
+  titles: {
+    descent: '下轉門：佛成為世界之路',
+    ascent: '上轉門：眾生成佛之路',
+    form: '轉相：法曼荼羅（種字）→ 三昧耶曼荼羅（標幟）→ 大曼荼羅（尊形）',
+    enter: '入壇：法曼荼羅轉為羯磨曼荼羅',
+    toss: '投花得佛：閉目擲花，花落何尊，即與何尊結緣',
+    kan: '五相成身觀：坐於壇心，觀心月輪。輕觸以進',
+    sound: '磬音：點尊一磬，五部各韻',
+    reset: '復觀：還於俯瞰',
+  },
+};
+
+const UI_EN = {
+  descent: 'Descent', ascent: 'Ascent', stop: 'Halt',
+  enter: 'Enter', exit: 'Leave', toss: 'Cast',
+  kan: 'Observe', kanExit: 'End',
+  soundOff: 'Silent', soundOn: 'Sound', reset: 'Reset',
+  sliderT: 'Womb', sliderK: 'Diamond', sliderMid: 'ADVAYA',
+  hintAerial: 'Drag to orbit · Scroll to zoom · Tap a deity',
+  hintFP: 'Drag to look · WASD to walk · Esc to leave',
+  hintKan: 'Tap to proceed · No haste in contemplation · Esc to end',
+  realms: ['Womb Realm', 'A D V A Y A', 'Diamond Realm'],
+  headDescent: 'Gate of Descent', headAscent: 'Gate of Ascent',
+  headToss: 'Casting the Flower',
+  tossTitle: n => `It falls · ${n}`,
+  tossText: 'The flower does not choose; the deity was already waiting. From this day on, this deity answers to you.',
+  bondPrefix: n => `Bonded deity · ${n}`,
+  veilToss: 'CLOSE YOUR EYES · CAST',
+  headForm: 'The Four Maṇḍalas',
+  headKan: i => `Five-Stage Attainment · Stage ${i + 1}`,
+  kanExitTitle: 'Contemplation ends',
+  kanExitText: 'The maṇḍala is as it was. So are you — and not.',
+  cardBtn: 'Bond certificate ↓',
+  num: (i, n) => `${i + 1} / ${n}`,
+  locT: 'Garbhadhātu', locK: 'Vajradhātu', jojin: 'Perfected-Body Assembly',
+  dual: (a, b) => `Two realms, one body: ${a} is ${b}`,
+  cardFoot1: d => `The flower was cast · ${d}`,
+  cardFoot2: 'C E R T I F I C A T E   O F   B O N D',
+  cardDate: d => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+  cardFile: n => `bond-${n}.png`,
+  titles: {
+    descent: 'Gate of Descent: the path by which the buddha becomes the world',
+    ascent: 'Gate of Ascent: the path by which beings become the buddha',
+    form: 'Change aspect: Dharma (seed) → Samaya (emblem) → Mahā (form)',
+    enter: 'Enter the maṇḍala: the dharma-maṇḍala becomes the karma-maṇḍala',
+    toss: 'Cast the flower: where it falls, there is your bonded deity',
+    kan: 'Five-Stage Attainment: sit at the center and contemplate the heart-moon. Tap to proceed',
+    sound: 'Bowl sound: each family has its tone; tap a deity to strike',
+    reset: 'Reset to the aerial view',
+  },
+};
+
+const UI_JA = {
+  hintAerial: 'ドラッグで旋観 · ホイールで遠近 · 尊に触れて詳らかに',
+  hintFP: 'ドラッグで環顧 · WASD で壇中を行く · Esc で出壇',
+  hintKan: '軽く触れて進む · 観に促しなし · Esc で出観',
+  tossText: '花は尊を択ばず、尊すでに汝を待てり。今より後、この尊汝に相応ず。',
+  bondPrefix: n => `結縁の尊 · ${n}`,
+  kanExitText: '観じ畢んぬ。壇城は故のごとく、汝もまた故のごとし——而して故にあらず。',
+  cardBtn: '結縁の証 ↓',
+  cardFoot1: d => `投花得仏 · ${d}`,
+  cardFoot2: '結 縁 の 証',
+  cardDate: d => `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`,
+  cardFile: n => `結縁の証-${n}.png`,
+};
+
+export function uiTable(lang) {
+  if (lang === 'en') return { ...UI_ZH, ...UI_EN };
+  if (lang === 'ja') return { ...UI_ZH, ...UI_JA };
+  return UI_ZH;
+}
+
+// ── 院名・會名・月輪・部族・形（EN；日語同漢字，落回原文）──────────────────
+export const COURT_EN = {
+  chudai: 'Central Eight-Petal Court', henchi: 'Court of Universal Knowledge',
+  jimyo: 'Court of the Vidyā Holders', renge: 'Lotus Court',
+  kongoshu: 'Vajra Court', shaka: 'Śākyamuni Court', monju: 'Mañjuśrī Court',
+  jokaisho: 'Court of Removing Hindrances', jizo: 'Kṣitigarbha Court',
+  kokuzo: 'Ākāśagarbha Court', soshitsuji: 'Susiddhi Court',
+  gekongobu: 'Outer Vajra Court',
+};
+export const ASM_EN = {
+  jojin: 'Perfected-Body Assembly', sammaya: 'Samaya Assembly',
+  misai: 'Subtle Assembly', kuyo: 'Offering Assembly',
+  shiin: 'Four-Seal Assembly', ichiin: 'One-Seal Assembly',
+  rishu: 'Guiding-Principle Assembly', gozanze: 'Trailokyavijaya Assembly',
+  'gozanze-s': 'Trailokyavijaya Samaya Assembly',
+};
+export const CIRCLE_EN = {
+  center: 'Central Moon', east: 'Eastern Moon', south: 'Southern Moon',
+  west: 'Western Moon', north: 'Northern Moon',
+  inner: 'Inner Offering Seat', outer: 'Outer Offering Seat', gate: 'Four Gates',
+};
+export const FAMILY_EN = {
+  butsu: 'Buddha Family', kongo: 'Vajra Family', ho: 'Jewel Family',
+  renge: 'Lotus Family', katsuma: 'Karma Family', ten: 'Outer Vajra Devas',
+};
+export const FORMVAR_EN = {
+  bija: 'seed-syllable', samaya: 'samaya', subtle: 'subtle',
+  offer: 'offering', wrath: 'wrathful', 'wrath-samaya': 'wrathful samaya',
+};
+
+// ── 四曼之相 ────────────────────────────────────────────────────────────────
+export const FORM_I18N = {
+  en: [
+    { zh: 'Dharma Maṇḍala', sub: 'Seed', desc: 'The deities appear as Siddhaṃ seed-syllables — the aspect of sound and letter.' },
+    { zh: 'Samaya Maṇḍala', sub: 'Emblem', desc: 'The deities appear as implements and emblems — the aspect of original vow.' },
+    { zh: 'Mahā Maṇḍala', sub: 'Form', desc: 'The deities appear in bodily form — the aspect of the embodied. Enter, and they rise: toward the karma-maṇḍala.' },
+  ],
+  ja: [
+    { zh: '法曼荼羅', sub: '種字', desc: '諸尊を悉曇の種字に現ず——音声文字の相。' },
+    { zh: '三昧耶曼荼羅', sub: '標幟', desc: '諸尊を器仗印契に現ず——本誓の相。' },
+    { zh: '大曼荼羅', sub: '尊形', desc: '諸尊を相好の身形に現ず——色身の相。入壇すれば立ち上がり、羯磨曼荼羅へ向かう。' },
+  ],
+};
+
+// ── 胎藏上下轉法語 ──────────────────────────────────────────────────────────
+export const TAIZO_I18N = {
+  en: {
+    descent: [
+      { title: 'Central Eight Petals', text: 'The womb of great compassion is the mind at its source. Five buddhas, four bodhisattvas — abiding just as they are.' },
+      { title: 'Knowledge & Vidyā Courts', text: 'The seal of wisdom first stirs; the vidyārājas attend. Where compassion goes, wisdom goes before it.' },
+      { title: 'Lotus & Vajra Wings', text: 'Compassion and wisdom spread as two wings: the lotus of Avalokiteśvara, the vajra of Vajrasattva.' },
+      { title: 'Courts of Salvation', text: 'Śākyamuni descends in traces, Mañjuśrī walks as a youth, Kṣitigarbha carries, Ākāśagarbha bestows.' },
+      { title: 'Outer Vajra Court', text: 'Even devas, nāgas and spirits — not one thing lies outside the maṇḍala. The reach of compassion is complete.' },
+    ],
+    ascent: [
+      { title: 'Outer Vajra Court', text: 'Where the practitioner first stands: a worldly body, among the devas.' },
+      { title: 'Courts of Salvation', text: 'Follow Śākyamuni’s teaching, ask Mañjuśrī’s question, make Kṣitigarbha’s vow.' },
+      { title: 'Lotus & Vajra Wings', text: 'Cultivate compassion like the lotus, wisdom like the vajra; the two wings take form.' },
+      { title: 'Knowledge & Vidyā Courts', text: 'Guarded by the vidyārājas, lit by the Buddha-eye — about to enter the heart’s dais.' },
+      { title: 'Central Eight Petals', text: 'The eight petals open: see the originally unborn. Your mind is Mahāvairocana.' },
+    ],
+  },
+  ja: {
+    descent: [
+      { title: '中臺八葉', text: '大悲胎蔵は本源の自心。五仏四菩薩、法爾として住す。' },
+      { title: '遍知・持明', text: '智印初めて動き、明王かたわらに侍る。悲のまさに行かんとするや、智これに先んず。' },
+      { title: '蓮華・金剛', text: '悲智張りて両翼と為る。観音の蓮、薩埵の杵。' },
+      { title: '化他諸院', text: '釈迦は跡を垂れ、文殊は童行し、地蔵は荷負し、虚空蔵は施す。' },
+      { title: '外金剛部', text: '天龍鬼神に至るまで、一法として曼荼羅の外に在るなし。大悲の化ここに尽く。' },
+    ],
+    ascent: [
+      { title: '外金剛部', text: '行者の最初に立つ地。世間の身、諸天の間。' },
+      { title: '化他諸院', text: '釈迦の教えに依り、文殊の問いを行じ、地蔵の願を発す。' },
+      { title: '蓮華・金剛', text: '悲を修むること蓮のごとく、智を修むること杵のごとく、両翼ようやく成る。' },
+      { title: '遍知・持明', text: '明王の護りを受け、仏眼の照らしを得て、まさに心台に入らんとす。' },
+      { title: '中臺八葉', text: '八葉開敷して本不生を見る。汝が心即ちこれ大日。' },
+    ],
+  },
+};
+
+// ── 九會上下轉法語 ──────────────────────────────────────────────────────────
+export const ASM_I18N = {
+  en: {
+    jojin: {
+      descent: 'Complete by nature: thirty-seven deities, five wisdoms fully bright — the buddha-body innately possessed.',
+      ascent: 'Buddhahood in this very body: arriving here, the practitioner is no different from the thirty-seven.',
+    },
+    sammaya: {
+      descent: 'Form withdraws into vow: only implements and emblems remain — the buddhas dwell in the world as pledges.',
+      ascent: 'Take up the seal, make the vow: before seeing the buddha’s body, hold the buddha’s pledge.',
+    },
+    misai: {
+      descent: 'Entering the adamantine subtle: shrunk within the vajra, dwelling inside all things — nothing does not contain a buddha.',
+      ascent: 'See the buddha in the minute: each mote, each vajra, hides the whole.',
+    },
+    kuyo: {
+      descent: 'Mutual offering: each deity bears incense, flower, lamp and unguent — compassion and wisdom nourishing each other through and through.',
+      ascent: 'Enter the way through offering: present one flower, one lamp, and you interpenetrate the holy assembly.',
+    },
+    shiin: {
+      descent: 'The many gathered toward the simple: thirty-seven deities drawn into four seals, soon to return to one.',
+      ascent: 'The four seals first divide: the one is about to open into the many; differentiated virtue first appears.',
+    },
+    ichiin: {
+      descent: 'A thousand deities return to one: Mahāvairocana alone, the wisdom-fist seal. The many are the one.',
+      ascent: 'The first glimpse of many within one: in the single, a presentiment of the measureless.',
+    },
+    rishu: {
+      descent: 'Affliction is awakening: desire, touch, love, pride — all seals of Vajrasattva. The deepest descent into the world.',
+      ascent: 'The real in the midst of things: not shunning the dust of desire, practice begins within defilement — the first gate of ascent.',
+    },
+    gozanze: {
+      descent: 'Wrath made manifest: compassion at its utmost turns to thunder, crushing the obstinacy of the three worlds.',
+      ascent: 'Subdue your own mind first: crush your own greed, anger, delusion — what lies beneath the foot is your own pride.',
+    },
+    'gozanze-s': {
+      descent: 'The utmost reach of saving grace: even wrath withdraws into emblem, scattering into the darkest places. Here the gate of descent ends.',
+      ascent: 'The gate where the practitioner first enters: among implements and emblems, the first vow is made.',
+    },
+  },
+  ja: {
+    jojin: {
+      descent: '法然に具足す。三十七尊、五智円明、本有の仏身。',
+      ascent: '即身成仏。行者ここに至りて、三十七尊と別なし。',
+    },
+    sammaya: {
+      descent: '身を摂めて誓いと為す。尊形隠れて器仗標幟のみ残る——仏は誓約をもって世に住す。',
+      ascent: '印を持して誓いを起こす。仏身を見ざるに、先ずその誓いを持す。',
+    },
+    misai: {
+      descent: '金剛微細に入る。杵中に縮まり、万法の内に遍住す——仏を含まざる物なし。',
+      ascent: '微細の処に仏を見る。一塵一杵、みな全体を蔵す。',
+    },
+    kuyo: {
+      descent: '互いに供養と為る。諸尊おのおの香華灯塗を捧げ、悲智交徹して相養う。',
+      ascent: '供養をもって道に入る。一華一灯を奉ずれば、即ち聖衆と交徹す。',
+    },
+    shiin: {
+      descent: '繁を摂めて簡と為す。三十七尊四印に収まり、まさに一に帰せんとす。',
+      ascent: '四印初めて分かる。一まさに万に開かんとし、行者初めて差別の徳を見る。',
+    },
+    ichiin: {
+      descent: '千尊一に帰す。唯一の大日、智拳の印。多即ち一なり。',
+      ascent: '一中に多を見るの始め。唯一の処に無量を予感す。',
+    },
+    rishu: {
+      descent: '煩悩即菩提。欲触愛慢、みな金剛薩埵の印。入世の最深処。',
+      ascent: '事に即して真。欲塵を避けず、染中に修を起こす——上転の初門。',
+    },
+    gozanze: {
+      descent: '忿怒身を現ず。慈悲の極まりかえって雷霆と為り、三界の剛強を摧く。',
+      ascent: '自心を降伏す。先ず己が貪瞋癡を摧け——足下に踏むはすなわち我慢なり。',
+    },
+    'gozanze-s': {
+      descent: '垂化の極み。忿怒もまた符印に隠れ、最も暗き処に散じ入る。下転の門ここに尽く。',
+      ascent: '行者初めて入る門。器仗符印の間に、最初の誓いを立つ。',
+    },
+  },
+};
+
+// ── 五相成身觀 ──────────────────────────────────────────────────────────────
+export const STAGE_I18N = {
+  en: [
+    { title: 'Penetrating the Mind of Awakening', text: 'Gaze into your own mind: a moon behind mist. The mist hides it; the light has never gone out.' },
+    { title: 'Cultivating the Mind of Awakening', text: 'The mist disperses, the moon brightens — full and immaculate. This mind has been pure from the start; nothing need be sought outside.' },
+    { title: 'Accomplishing the Adamantine Mind', text: 'Within the moon appears the five-pronged vajra, indestructible. Compassion and wisdom congeal into a single implement.' },
+    { title: 'Realizing the Adamantine Body', text: 'The vajra grows vast, filling the Dharma-realm. The body is vajra; vajra is the body.' },
+    { title: 'The Buddha-Body Complete', text: 'As all buddhas are, so am I. You enter me, I enter you: buddhahood in this very body.' },
+  ],
+  ja: [
+    { title: '通達菩提心', text: '自心を諦観すれば、霧中の月のごとし。月は霧のうしろ、光いまだかつて滅せず。' },
+    { title: '修菩提心', text: '霧散じて月明らかに、円満皎潔たり。この心もとより清浄、外に求むるを仮らず。' },
+    { title: '成金剛心', text: '月中に五鈷金剛現ず、堅固にして壊れず。悲智ここに凝りて一杵と為る。' },
+    { title: '證金剛身', text: '杵ようやく広大にして、法界に遍満す。身即ち金剛、金剛即ち身。' },
+    { title: '佛身圓滿', text: '諸仏かくのごとく、我もまたかくのごとし。入我我入、即身成仏。' },
+  ],
+};
+
+// ── 八十三尊行狀 ────────────────────────────────────────────────────────────
+export const DESC_I18N = {
+  en: {
+    center: 'Wisdom of the Dharma-realm’s essential nature: the one unmoving heart-point shared by both realms.',
+    east: 'Mirror-like wisdom. In the east the mind of awakening first arises — a banner planted, immovable.',
+    south: 'Wisdom of equality. In the south the myriad practices flower; merit and wisdom complete.',
+    west: 'Wisdom of discerning insight. In the west doubt is severed by preaching; the lotus is pure.',
+    north: 'Wisdom of accomplishment. In the north, nirvāṇa’s free activity — a heavenly drum that sounds unstruck.',
+    fugen: 'Samantabhadra is Vajrasattva: the vow of great practice, the adamantine and indestructible mind.',
+    kannon: 'Avalokiteśvara is Vajradharma: the gaze of great compassion is itself the pure gate of Dharma.',
+    monju: 'Mañjuśrī is Vajratīkṣṇa: the sword of prajñā that severs all elaboration.',
+    miroku: 'Maitreya is Vajrahetu: the fruit to come already turns the wheel within the cause.',
+    kokuzo: 'Ākāśagarbha is Vajraratna: merit and wisdom vast as space, an inexhaustible treasury.',
+    'k-o': 'Hooks all beings and draws them in, never to fall back.',
+    'k-ai': 'Shoots the arrow of compassion into the world-weary heart — stained, yet unstained.',
+    'k-ki': '“Well done, well done” — rejoicing in the innate virtue of all beings.',
+    'k-ko': 'Wisdom-light like the sun, breaking the dark of ignorance.',
+    'k-do': 'Raises the banner of wish-fulfilment, raining down every jewel.',
+    'k-sho': 'Breaks into a smile — the seal of all buddhas’ delight.',
+    'k-go': 'Sixty-four tones of Brahmā: all speech becomes mantra.',
+    'k-gyo': 'Every act becomes the work of a buddha.',
+    'k-gou': 'Clad in the armor of the great vow.',
+    'k-ge': 'Bares great fangs to subdue — fierce in its protection.',
+    'k-ken': 'The three mysteries joined in one fist: the seal of accomplishment. Same name, same body, in both realms.',
+    'p-kon': 'The four buddhas’ offering to Mahāvairocana: the pāramitā of adamant.',
+    'p-ho': 'The four buddhas’ offering to Mahāvairocana: the pāramitā of abundance.',
+    'p-hou': 'The four buddhas’ offering to Mahāvairocana: the pāramitā of purity.',
+    'p-katsu': 'The four buddhas’ offering to Mahāvairocana: the pāramitā of action.',
+    'g-ki': 'Inner offering: the delight of play.',
+    'g-man': 'Inner offering: adornment by garland.',
+    'g-ka': 'Inner offering: the wonder of song.',
+    'g-bu': 'Inner offering: the rite of dance.',
+    'g-ko': 'Outer offering: incense pervading the Dharma-realm.',
+    'g-ke': 'Outer offering: flowers scattered like rain.',
+    'g-to': 'Outer offering: lamplight into the dark.',
+    'g-zu': 'Outer offering: unguent purifying body and mind.',
+    's-ko': 'Of the four embraces: the hook, drawing one into the maṇḍala.',
+    's-saku': 'Of the four embraces: the rope, binding one to awakening.',
+    's-sa': 'Of the four embraces: the chain, holding fast against regress.',
+    's-rei': 'Of the four embraces: the bell, joy entering everywhere.',
+    'r-yoku': 'Great desire, purified: the arrow leaves the string and is already empty.',
+    'r-soku': 'Touch as it originally is: an embrace that does not bind.',
+    'r-ai': 'The bond of love is itself liberation; the makara-banner raised high.',
+    'r-man': 'Great pride as the great self: lofty, yet bowing to all things.',
+    henchi: 'The triangle of wisdom-fire: the seal from which all buddhas are born.',
+    butsugen: 'The eye that gives birth to buddhas; mother of omniscience.',
+    shichikutei: 'Cundī, the mother proclaimed by seventy million buddhas.',
+    hannya: 'Prajñāpāramitā embodied; mother of all vidyās.',
+    fudo: 'Mahāvairocana’s wrathful envoy: sword and rope, seated on the rock, unmoved.',
+    'gozanze-t': 'Subdues greed, anger and delusion throughout the three worlds; treads upon Maheśvara.',
+    daiitoku: 'The six-legged lord who crushes Yama, king of death.',
+    'sho-kannon': 'Lord of the Lotus family, the unopened bud in hand.',
+    tara: 'Tārā, born of the compassionate tears of Avalokiteśvara.',
+    bikuchi: 'Born of the knitted brow, subduing those hard to tame.',
+    seishi: 'His wisdom-light reaches everywhere; great strength attained.',
+    bato: 'The Lotus family’s wrath: devouring affliction as a horse devours grass.',
+    byakue: 'Dwelling within the white lotus; mother of the Lotus family.',
+    'kongosatta-t': 'Lord of the Vajra family — Samantabhadra of the petals, here in his active body.',
+    mamaki: 'Māmakī, mother of the Vajra family’s many retinues.',
+    kongoshin: 'One needle pierces all dharmas through; nothing it does not reach.',
+    'kongoko-nyo': 'The hook-maiden who summons those difficult to save.',
+    shaka: 'The transformation body of Mahāvairocana, turning the wheel in this world.',
+    gozo: 'The white curl between the brows: one mark whose light is the all-pervading.',
+    munosho: 'Śākyamuni’s wrathful envoy, whom no army of Māra can defeat.',
+    'gokei-monju': 'The youth of five topknots: five wisdoms not yet divided. One body with the Mañjuśrī of the petals.',
+    komo: 'Mañjuśrī’s attendant: a net woven of light.',
+    mukuko: 'Mañjuśrī’s attendant: stainless radiance.',
+    jokaisho: 'Removes the covering hindrances, like a jewel rising from turbid water.',
+    himin: 'The sage of compassion, hand forming the obstacle-removing seal.',
+    jizo: 'Treasury of the great earth, bearing the beings of the last age.',
+    'hosho-bo': 'The place whence jewels come: treasure hidden in the earth.',
+    senju: 'A thousand arms, a thousand eyes: compassion at its utmost. The genzu places him in the Ākāśagarbha court.',
+    juichimen: 'Eleven faces lighting the eleven grades of ignorance.',
+    gundari: 'Amṛta-Kuṇḍalī, serpent-garlanded wrath, dispelling every obstacle.',
+    taishaku: 'Guardian of the east; lord of the Thirty-three.',
+    katen: 'Southeast: Agni, mouth of the homa, mouth of the gods.',
+    emma: 'South: Yama, king of death; a human-headed standard his emblem.',
+    rasetsu: 'Southwest: lord of the rākṣasas, the devourers.',
+    suiten: 'West: Varuṇa of the nāga-noose, deva of the waters.',
+    futen: 'Northwest: Vāyu of the wind-banner, on whom all motion depends.',
+    bishamon: 'North: Vaiśravaṇa who hears all, a jeweled stūpa in his palm.',
+    ishana: 'Northeast: wrathful Īśāna, trident in hand.',
+    bonten: 'Zenith: four-faced Brahmā, lord of the sahā world.',
+    jiten: 'Nadir: the earth that bears all things, witness to the awakening.',
+    nitten: 'Deva of the sun-disc: the light of day.',
+    gatten: 'Deva of the moon-disc: the cool of night.',
+  },
+  ja: {
+    center: '法界体性智。理智の源、両部にただ一つ動かぬ心点。',
+    east: '大円鏡智。東方にて菩提心を発す——幢を立てて動ぜず。',
+    south: '平等性智。南方にて万行開敷し、福智円満す。',
+    west: '妙観察智。西方にて法を説き疑いを断つ、蓮華清浄なり。',
+    north: '成所作智。北方涅槃の妙用、天鼓の撃たずして鳴るがごとし。',
+    fugen: '普賢すなわち金剛薩埵。大行の願、堅固不壊の心。',
+    kannon: '観音すなわち金剛法。大悲の観照、そのまま清浄法門。',
+    monju: '文殊すなわち金剛利。般若の剣、一切の戯論を断つ。',
+    miroku: '弥勒すなわち金剛因。当来の果、因中にすでに法輪を転ず。',
+    kokuzo: '虚空蔵すなわち金剛宝。福智虚空のごとく、無尽の蔵。',
+    'k-o': '一切衆生を鉤召し、不退転に入らしむ。',
+    'k-ai': '悲の箭をもて厭離の心を射る——染して染せず。',
+    'k-ki': '善哉善哉と、衆生本有の徳を慶ぶ。',
+    'k-ko': '智光日のごとく、無明の闇を破る。',
+    'k-do': '満願の幢を建て、一切の宝を雨ふらす。',
+    'k-sho': '破顔微笑、諸仏歓喜の印。',
+    'k-go': '六十四種の梵音、言説そのまま真言。',
+    'k-gyo': '一切の所作、みな仏事と成る。',
+    'k-gou': '大誓荘厳の甲冑を被る。',
+    'k-ge': '大牙を現じて摧伏す——護りて威あり。',
+    'k-ken': '三密合して拳と成る、成就の印。両部同名同体。',
+    'p-kon': '四仏の大日への供養——堅固の度。',
+    'p-ho': '四仏の大日への供養——富饒の度。',
+    'p-hou': '四仏の大日への供養——清浄の度。',
+    'p-katsu': '四仏の大日への供養——作業の度。',
+    'g-ki': '内供養——嬉戯の悦び。',
+    'g-man': '内供養——華鬘の荘厳。',
+    'g-ka': '内供養——歌詠の妙。',
+    'g-bu': '内供養——旋舞の儀。',
+    'g-ko': '外供養——焼香法界に遍し。',
+    'g-ke': '外供養——散華繽紛たり。',
+    'g-to': '外供養——灯明幽冥を照らす。',
+    'g-zu': '外供養——塗香身心を浄む。',
+    's-ko': '四摂の鉤——壇城に引き入る。',
+    's-saku': '四摂の索——菩提に繋ぐ。',
+    's-sa': '四摂の鎖——退失せしめず。',
+    's-rei': '四摂の鈴——歓喜遍入。',
+    'r-yoku': '大欲清浄、箭弦を離れて即ち空。',
+    'r-soku': '触の本然、抱きて縛らず。',
+    'r-ai': '愛縛すなわち解脱、摩竭の幢高く掲ぐ。',
+    'r-man': '大慢すなわち大我、傲然として万物を礼す。',
+    henchi: '三角の智火の印——諸仏能生の智。',
+    butsugen: '諸仏を生む眼、遍知の母。',
+    shichikutei: '准胝、七倶胝の仏の共に説きし母。',
+    hannya: '般若波羅蜜の尊形、諸明の母。',
+    fudo: '大日の教令輪身。慧刀羂索、磐石に座して動ぜず。',
+    'gozanze-t': '三界の貪瞋癡を降伏し、大自在天を踏む。',
+    daiitoku: '六足尊、閻魔の死主を摧く。',
+    'sho-kannon': '蓮華部主、未敷の蓮を手にす。',
+    tara: '観音の悲涙より生まれし度母。',
+    bikuchi: '顰みし眉より生じ、難化を折伏す。',
+    seishi: '智慧の光あまねく照らし、大勢力を得たり。',
+    bato: '蓮華部の忿怒——馬の草を喰むごとく煩悩を喰らい尽くす。',
+    byakue: '白蓮の中に住す、蓮華部の部母。',
+    'kongosatta-t': '金剛部主。八葉の普賢と同体異位、これその用の身。',
+    mamaki: '金剛部の部母、多眷属の母。',
+    kongoshin: '一針万法を徹す、通達せざるなし。',
+    'kongoko-nyo': '鉤召の女使、難化を摂す。',
+    shaka: '大日の変化身、閻浮提に法輪を転ずる者。',
+    gozo: '眉間白毫の一相、放つ光すなわち遍照。',
+    munosho: '釈迦の教令輪身、魔軍も勝つこと能わず。',
+    'gokei-monju': '童真五髻、五智未分の相。八葉の文殊と同体異位。',
+    komo: '文殊の使者、光明を網と為す。',
+    mukuko: '文殊の使者、無垢の光。',
+    jokaisho: '一切の煩悩蓋障を除く——珠の濁水を出づるがごとし。',
+    himin: '悲愍の慧者、手に除障の印を作す。',
+    jizo: '大地の蔵、末世の衆生を荷負す。',
+    'hosho-bo': '宝の出づる処、地中の伏蔵。',
+    senju: '千臂千眼、大悲の極致。現図には虚空蔵院に置く。',
+    juichimen: '十一面、十一品の無明を照らす。',
+    gundari: '甘露軍荼利、蛇瓔の忿怒、諸障を辟除す。',
+    taishaku: '東方の護世、忉利の主。',
+    katen: '東南、護摩の口、諸天の口。',
+    emma: '南方、死王。人頭幢を印と為す。',
+    rasetsu: '西南、啖食の主、諸羅刹を摂す。',
+    suiten: '西方、龍索の主、水の天。',
+    futen: '西北、風幢の天、行の依る所。',
+    bishamon: '北方、多聞。掌中に宝塔。',
+    ishana: '東北、大自在の忿怒、三戟を印と為す。',
+    bonten: '上方、四面の祖、娑婆の主。',
+    jiten: '下方、能持の地、成道を証せし天。',
+    nitten: '日輪の天、昼の照。',
+    gatten: '月輪の天、夜の涼。',
+  },
+};

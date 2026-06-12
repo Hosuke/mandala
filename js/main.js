@@ -16,12 +16,22 @@ import {
 } from './data/courts.js';
 import {
   morphTargets, assemblyEchoes, taizoEdges, kongoEdges,
-  spiralCurve, cellCenter, assemblyByKey, CELL,
+  spiralCurve, cellCenter, assemblyByKey, CELL, DESCENT_ORDER,
 } from './layout.js';
+import {
+  uiTable, COURT_EN, ASM_EN, CIRCLE_EN, FAMILY_EN, FORMVAR_EN,
+  FORM_I18N, TAIZO_I18N, ASM_I18N, STAGE_I18N, DESC_I18N,
+} from './data/i18n.js';
 import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture } from './textures.js';
 import { bondCard } from './card.js';
 import * as bell from './bell.js';
-import { Goso, stageHead } from './goso.js';
+import { Goso } from './goso.js';
+
+// ── 三語 ────────────────────────────────────────────────────────────────────
+let lang = 'zh';
+try { lang = localStorage.getItem('mandala-lang') || 'zh'; } catch { /* 私隱模式 */ }
+if (!['zh', 'en', 'ja'].includes(lang)) lang = 'zh';
+let T = uiTable(lang);
 import { stepTweens, tween, smoothstep, damp } from './anim.js';
 import { Rig } from './camera.js';
 import { Traversal } from './traversal.js';
@@ -38,6 +48,14 @@ const FORM_ZH = {
 };
 const courtByKey = Object.fromEntries(COURTS.map(c => [c.key, c]));
 const PI = Math.PI;
+
+// 釋義之層隨語而轉；壇上之字（尊名・名牌・種字）不譯
+const descOf = d => (lang === 'zh' ? d.desc : (DESC_I18N[lang]?.[d.id] ?? d.desc));
+const courtName = key => (lang === 'en' ? COURT_EN[key] : courtByKey[key].zh);
+const asmName = a => (lang === 'en' ? ASM_EN[a.key] : a.zh);
+const circleName = c => (lang === 'en' ? CIRCLE_EN[c] : CIRCLE_ZH[c]);
+const famName = f => (lang === 'en' ? FAMILY_EN[f] : FAMILY_ZH[f]);
+const formVarName = f => (lang === 'en' ? FORMVAR_EN[f] : FORM_ZH[f]);
 
 const state = {
   lambda: 0, lambdaTarget: 0,
@@ -213,6 +231,23 @@ async function boot() {
     }
   }
 
+  // 換語之際，凡有狀態之字皆重書
+  function applyLang() {
+    ui.setLangTable(T, lang);
+    ui.setRealm(state.lambda);
+    ui.enterUI(state.entered);
+    ui.kanUI(!!(goso?.active || kanTimer));
+    ui.soundUI(bell.isMuted());
+    ui.traversalUI(trav?.active ?? false, state.travDir);
+    const fi = FORMS.findIndex(f => f.key === state.form);
+    ui.formUI((lang === 'zh' ? FORMS[fi] : FORM_I18N[lang][fi]).sub);
+    if (bondNode) {
+      const a = bondSide === 't' ? bondNode.d.t : bondNode.d.k;
+      ui.setBond(T.bondPrefix(a.zh));
+    }
+    ui.hideInfo(); // 尊牌之語隨下次點取而換
+  }
+
   // ── 介面 ──
   const ui = initUI({
     onLambda(v, reflect) {
@@ -239,12 +274,21 @@ async function boot() {
     onSpace() { if (goso.active) goso.advance(); },
     onForm() {
       const i = FORMS.findIndex(f => f.key === state.form);
-      const next = FORMS[(i + 1) % FORMS.length];
-      state.form = next.key;
-      ui.formUI(next.sub);
-      ui.announce('四種曼荼羅 · 轉相', `${next.zh}（${next.sub}）`, next.desc);
+      const ni = (i + 1) % FORMS.length;
+      state.form = FORMS[ni].key;
+      const loc = lang === 'zh' ? FORMS[ni] : FORM_I18N[lang][ni];
+      ui.formUI(loc.sub);
+      ui.announce(T.headForm,
+        lang === 'zh' ? `${loc.zh}（${loc.sub}）` : `${loc.zh} (${loc.sub})`, loc.desc);
       ui.hideCaption(5200);
       if (bell.ready() && !bell.isMuted()) bell.strike(174.6, { gain: 0.1, dur: 4 });
+    },
+    onLang(l) {
+      if (l === lang) return;
+      lang = l;
+      T = uiTable(l);
+      try { localStorage.setItem('mandala-lang', l); } catch { /* 私隱模式 */ }
+      applyLang();
     },
     onTraverse(dir) {
       exitKan();
@@ -292,13 +336,24 @@ async function boot() {
       else if (trav.active) trav.stop();
       else ui.hideInfo();
     },
-  });
-  ui.enterUI(false);
-  ui.setRealm(0);
+  }, T);
 
   const trav = new Traversal({
     caption(head, title, text, i, n) {
-      ui.caption(head, title, text, i, n);
+      // 法語隨語而轉（traversal 持結構，文責在此）
+      if (lang !== 'zh') {
+        if (trav.realm === 'kongo') {
+          const order = trav.dir === 'descent' ? DESCENT_ORDER : [...DESCENT_ORDER].reverse();
+          const key = order[i];
+          title = asmName(assemblyByKey[key]);
+          text = ASM_I18N[lang][key][trav.dir];
+        } else {
+          const step = TAIZO_I18N[lang][trav.dir][i];
+          title = step.title;
+          text = step.text;
+        }
+      }
+      ui.caption(trav.dir === 'descent' ? T.headDescent : T.headAscent, title, text, i, n);
       if (bell.ready() && !bell.isMuted()) {
         bell.strike(i % 2 ? 164.8 : 146.8, { gain: 0.1, dur: 4.5 }); // 換會一磬
       }
@@ -334,7 +389,7 @@ async function boot() {
 
   function doToss() {
     if (!state.entered) return; // 儀軌中途被撤，不擲
-    ui.veilFlash('閉 目 擲 花');
+    ui.veilFlash(T.veilToss);
     tossTimer = setTimeout(() => {
       tossTimer = null;
       if (!state.entered) return;
@@ -377,8 +432,8 @@ async function boot() {
       localStorage.setItem('mandala-bond', JSON.stringify({ id: best.d.id, side: bondSide }));
     } catch { /* 私隱模式無妨 */ }
     const name = (bondSide === 't' ? best.d.t : best.d.k).zh;
-    ui.setBond(`結緣之尊 · ${name}`);
-    ui.announce('投花得佛', `花落 · ${name}`, '花不擇尊，尊已待汝。自今而後，此尊與汝相應。');
+    ui.setBond(T.bondPrefix(name));
+    ui.announce(T.headToss, T.tossTitle(name), T.tossText);
     if (bell.ready() && !bell.isMuted()) {
       bell.strike(bell.FAMILY_FREQ[best.d.family] * 2, { gain: 0.2, dur: 6 });
       setTimeout(() => bell.strike(bell.FAMILY_FREQ[best.d.family], { gain: 0.22, dur: 9 }), 380);
@@ -405,13 +460,15 @@ async function boot() {
     const url = bondCard({
       sid: siddham(aspect.bija), roman: aspect.bija,
       zh: aspect.zh, sk: aspect.sk,
-      familyZh: FAMILY_ZH[d.family],
+      familyZh: famName(d.family),
       colorHex: '#' + FAMILY_COLOR[d.family].toString(16).padStart(6, '0'),
-      mantra: d.mantra, mantraSid: sidPhrase(d.mantra), desc: d.desc,
+      mantra: d.mantra, mantraSid: sidPhrase(d.mantra), desc: descOf(d),
+      foot1: T.cardFoot1(T.cardDate(new Date())),
+      foot2: T.cardFoot2,
     });
     const a = document.createElement('a');
     a.href = url;
-    a.download = `結緣之證-${aspect.zh}.png`;
+    a.download = T.cardFile(aspect.zh);
     a.click();
   }
 
@@ -425,7 +482,7 @@ async function boot() {
       if (node) {
         bondNode = node;
         bondSide = side === 'k' && node.hasK ? 'k' : node.hasT ? 't' : 'k';
-        ui.setBond(`結緣之尊 · ${(bondSide === 't' ? node.d.t : node.d.k).zh}`);
+        ui.setBond(T.bondPrefix((bondSide === 't' ? node.d.t : node.d.k).zh));
       }
     }
   } catch { /* 私隱模式無妨 */ }
@@ -433,8 +490,10 @@ async function boot() {
   // 觀法之軀（ui 既立，乃造）
   goso = new Goso(scene, camera, {
     stage(idx, s) {
+      const loc = lang === 'zh' ? s : { ...s, ...STAGE_I18N[lang][idx] };
       const sid = sidPhrase(s.mantra);
-      ui.announce(stageHead(idx), s.title, `${s.text}\n${sid ? sid + '\n' : ''}${s.mantra}`);
+      ui.announce(T.headKan(idx), loc.title,
+        `${loc.text}\n${sid ? sid + '\n' : ''}${s.mantra}`);
       if (bell.ready() && !bell.isMuted()) bell.strike(s.freq, { gain: 0.2, dur: 9 });
     },
     flash: () => ui.flash(),
@@ -443,10 +502,12 @@ async function boot() {
       rig.frozen = false;
       ui.kanUI(false);
       ui.enterUI(state.entered);
-      ui.announce('五相成身觀', '出觀', '觀已，壇城如故，汝亦如故——而非故。');
+      ui.announce(lang === 'en' ? 'Five-Stage Attainment' : '五相成身觀',
+        T.kanExitTitle, T.kanExitText);
       ui.hideCaption(6500);
     },
   });
+  applyLang();
 
   function toggleEnter(on) {
     if (on === state.entered) return;
@@ -485,7 +546,7 @@ async function boot() {
     }
     hovered = pickAt(e.clientX, e.clientY);
     canvas.style.cursor = hovered ? 'pointer' : '';
-    ui.tooltip(e.clientX, e.clientY, hovered ? displayName(hovered) : null);
+    ui.tooltip(e.clientX, e.clientY, hovered ? tooltipName(hovered) : null);
   });
   canvas.addEventListener('pointerup', e => {
     if (!downAt) return;
@@ -506,6 +567,18 @@ async function boot() {
     return ref.hasT ? d.t.zh : d.k.zh;
   }
 
+  function tooltipName(ref) {
+    const zh = displayName(ref);
+    if (lang !== 'en') return zh;
+    // EN：尊名漢字（圖像之一部）綴以梵名
+    const sk = ref.kind === 'echo'
+      ? (ref.display?.sk ?? ref.d.k?.sk)
+      : (ref.hasT && ref.hasK
+        ? (effLambda(ref) < 0.5 ? ref.d.t.sk : ref.d.k.sk)
+        : (ref.hasT ? ref.d.t.sk : ref.d.k.sk));
+    return sk ? `${zh} · ${sk}` : zh;
+  }
+
   function showInfo(ref) {
     const { d } = ref;
     const color = '#' + FAMILY_COLOR[d.family].toString(16).padStart(6, '0');
@@ -516,24 +589,30 @@ async function boot() {
         sk: ref.display?.sk ?? d.k.sk,
         bija: ref.display?.bija ?? d.k.bija,
       };
-      loc = `金剛界 · ${ref.assembly.zh}（${FORM_ZH[ref.assembly.form]}）`;
+      loc = lang === 'en'
+        ? `${T.locK} · ${asmName(ref.assembly)} (${formVarName(ref.assembly.form)})`
+        : `${T.locK} · ${ref.assembly.zh}（${formVarName(ref.assembly.form)}）`;
     } else {
       const eff = effLambda(ref);
       const side = ref.hasT && ref.hasK ? (eff < 0.5 ? 't' : 'k') : (ref.hasT ? 't' : 'k');
       aspect = side === 't' ? d.t : d.k;
       const parts = [];
-      if (ref.hasT) parts.push(`胎藏 · ${courtByKey[d.t.court].zh}`);
-      if (ref.hasK) parts.push(`金剛界 · 成身會${CIRCLE_ZH[d.k.circle] ?? ''}`);
-      loc = parts.join('　／　');
+      if (ref.hasT) parts.push(`${T.locT} · ${courtName(d.t.court)}`);
+      if (ref.hasK) {
+        parts.push(lang === 'en'
+          ? `${T.locK} · ${T.jojin} · ${circleName(d.k.circle) ?? ''}`
+          : `${T.locK} · ${T.jojin}${circleName(d.k.circle) ?? ''}`);
+      }
+      loc = parts.join(lang === 'en' ? '  /  ' : '　／　');
       if (ref.hasT && ref.hasK && d.t.zh !== d.k.zh) {
-        loc += `\n兩部同體：${d.t.zh} 即 ${d.k.zh}`;
+        loc += `\n${T.dual(d.t.zh, d.k.zh)}`;
       }
     }
     ui.showInfo({
       bija: siddham(aspect.bija) || aspect.bija, bijaRoman: aspect.bija,
       name: aspect.zh, sk: aspect.sk,
-      family: FAMILY_ZH[d.family], familyColor: color,
-      loc, desc: d.desc, mantra: d.mantra, mantraSid: sidPhrase(d.mantra),
+      family: famName(d.family), familyColor: color,
+      loc, desc: descOf(d), mantra: d.mantra, mantraSid: sidPhrase(d.mantra),
     });
     ui.showCardButton(ref === bondNode); // 證卡唯結緣之尊可取
     if (bell.ready() && !bell.isMuted()) {

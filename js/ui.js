@@ -2,9 +2,9 @@
 // 緣之層：人與壇城相接之介面。題簽、滑尺（不二）、四鈕、法語、尊位牌。
 // ─────────────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
-const NUM = '一二三四五六七八九';
 
-export function initUI(h) {
+export function initUI(h, T0) {
+  let T = T0; // 三語標籤表（i18n.uiTable）
   const lambda = $('lambda');
   const caption = $('caption');
   const info = $('info');
@@ -25,6 +25,8 @@ export function initUI(h) {
   $('info-close').addEventListener('click', () => api.hideInfo());
   $('info-card').addEventListener('click', () => h.onCard());
   $('bond-line').addEventListener('click', () => h.onBondClick());
+  document.querySelectorAll('#langs button').forEach(b =>
+    b.addEventListener('click', () => h.onLang(b.dataset.lang)));
 
   window.addEventListener('keydown', e => {
     if (e.code === 'ArrowLeft') h.onLambda(Math.max(0, lambda.value / 1000 - 0.04), true);
@@ -39,19 +41,15 @@ export function initUI(h) {
     setLambda(v) { lambda.value = Math.round(v * 1000); },
 
     setRealm(l) {
-      const [zh, sk] = l < 1 / 3
-        ? ['大悲胎藏', 'GARBHADHĀTU']
-        : l < 2 / 3
-          ? ['不　二', 'ADVAYA']
-          : ['金剛界', 'VAJRADHĀTU'];
-      $('realm-name').textContent = zh;
-      $('realm-sub').textContent = sk;
-      document.body.classList.toggle('advaya', l >= 1 / 3 && l < 2 / 3);
+      const i = l < 1 / 3 ? 0 : l < 2 / 3 ? 1 : 2;
+      $('realm-name').textContent = T.realms[i];
+      $('realm-sub').textContent = ['GARBHADHĀTU', 'ADVAYA', 'VAJRADHĀTU'][i];
+      document.body.classList.toggle('advaya', i === 1);
     },
 
     caption(head, title, text, idx, n) {
       clearTimeout(captionTimer);
-      $('caption-head').textContent = `${head} · ${NUM[idx]}／${NUM[n - 1]}`;
+      $('caption-head').textContent = `${head} · ${T.num(idx, n)}`;
       $('caption-title').textContent = title;
       $('caption-text').textContent = text;
       caption.classList.remove('hidden');
@@ -66,18 +64,16 @@ export function initUI(h) {
     },
 
     traversalUI(active, dir) {
-      btnDescent.textContent = active && dir === 'descent' ? '止' : '下轉';
-      btnAscent.textContent = active && dir === 'ascent' ? '止' : '上轉';
+      btnDescent.textContent = active && dir === 'descent' ? T.stop : T.descent;
+      btnAscent.textContent = active && dir === 'ascent' ? T.stop : T.ascent;
       btnDescent.classList.toggle('lit', active && dir === 'descent');
       btnAscent.classList.toggle('lit', active && dir === 'ascent');
     },
 
     enterUI(entered) {
-      btnEnter.textContent = entered ? '出壇' : '入壇';
+      btnEnter.textContent = entered ? T.exit : T.enter;
       btnEnter.classList.toggle('lit', entered);
-      $('hint').textContent = entered
-        ? '拖曳環顧 · WASD 行於壇中 · Esc 出壇'
-        : '拖曳旋觀 · 滾輪遠近 · 點尊得詳';
+      $('hint').textContent = entered ? T.hintFP : T.hintAerial;
     },
 
     showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra, mantraSid }) {
@@ -129,9 +125,9 @@ export function initUI(h) {
     formUI(sub) { $('btn-form').textContent = sub; },
 
     kanUI(active) {
-      $('btn-kan').textContent = active ? '出觀' : '觀法';
+      $('btn-kan').textContent = active ? T.kanExit : T.kan;
       $('btn-kan').classList.toggle('lit', active);
-      if (active) $('hint').textContent = '輕觸以進 · 觀無促令 · Esc 出觀';
+      if (active) $('hint').textContent = T.hintKan;
     },
 
     flash() {
@@ -141,8 +137,29 @@ export function initUI(h) {
     },
 
     soundUI(mutedNow) {
-      $('btn-sound').textContent = mutedNow ? '默' : '音';
+      $('btn-sound').textContent = mutedNow ? T.soundOff : T.soundOn;
       $('btn-sound').classList.toggle('lit', !mutedNow);
+    },
+
+    setLangTable(table, langKey) {
+      T = table;
+      // 懸浮提示（title）亦隨語
+      const TITLE_IDS = {
+        descent: 'btn-descent', ascent: 'btn-ascent', form: 'btn-form',
+        enter: 'btn-enter', toss: 'btn-toss', kan: 'btn-kan',
+        sound: 'btn-sound', reset: 'btn-reset',
+      };
+      for (const [k, id] of Object.entries(TITLE_IDS)) $(id).title = T.titles[k];
+      // 靜物之字
+      $('btn-toss').textContent = T.toss;
+      $('btn-reset').textContent = T.reset;
+      $('info-card').textContent = T.cardBtn;
+      const ends = document.querySelectorAll('#slider-wrap .end');
+      ends[0].textContent = T.sliderT;
+      ends[1].textContent = T.sliderK;
+      document.querySelector('.slider-track .mid').textContent = T.sliderMid;
+      document.querySelectorAll('#langs button').forEach(b =>
+        b.classList.toggle('active', b.dataset.lang === langKey));
     },
 
     veilFlash(text, ms = 1300) {

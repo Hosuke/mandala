@@ -399,6 +399,31 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
 }
 #flash.on { opacity: 1; transition: opacity .12s ease-in; }
 
+/* 三語之擇 */
+#langs {
+  margin-top: 16px;
+  display: flex;
+  gap: 4px;
+  pointer-events: auto;
+}
+#langs button {
+  padding: 2px 8px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--cjk);
+  font-size: 11.5px;
+  letter-spacing: .12em;
+  color: rgba(168, 133, 74, .55);
+  cursor: pointer;
+  transition: all .3s;
+}
+#langs button:hover { color: var(--gold); }
+#langs button.active {
+  color: var(--gold);
+  border-color: var(--gold-faint);
+}
+
 /* 結緣之行 */
 #bond-line {
   display: block;

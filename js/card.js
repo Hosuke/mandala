@@ -2,7 +2,9 @@
 // 結緣之證：投花所得之尊，作一紙可攜之券。720×1080，紺紙金泥之製。
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, mantraSid, desc }) {
+// foot1/foot2：跋記二行（呼者按語供之）；題簽「金胎不二」為器物之銘，不譯
+export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, mantraSid, desc,
+  foot1 = '投花得佛', foot2 = '結 緣 之 證' }) {
   const W = 720, H = 1080;
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
@@ -103,10 +105,16 @@ export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, mantr
   ctx.stroke();
   ctx.fillText(familyZh, W / 2, 805);
 
-  // 行狀
+  // 行狀（英文行長，按幅縮字）
   if (desc) {
     ctx.fillStyle = 'rgba(233,226,207,0.66)';
-    ctx.font = '400 21px "LXGW WenKai TC", serif';
+    let fs = 21;
+    ctx.font = `400 ${fs}px "LXGW WenKai TC", serif`;
+    const w = ctx.measureText(desc).width;
+    if (w > W - 110) {
+      fs = Math.max(13.5, fs * (W - 110) / w);
+      ctx.font = `400 ${fs}px "LXGW WenKai TC", serif`;
+    }
     ctx.fillText(desc, W / 2, 858);
   }
   if (mantraSid) {
@@ -128,14 +136,12 @@ export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, mantr
   }
 
   // 跋
-  const d = new Date();
-  const dateStr = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
   ctx.fillStyle = 'rgba(168,133,74,0.7)';
   ctx.font = '400 18px "LXGW WenKai TC", serif';
-  ctx.fillText(`投花得佛 · ${dateStr}`, W / 2, 986);
+  ctx.fillText(foot1, W / 2, 986);
   ctx.font = '400 15px "LXGW WenKai TC", serif';
   ctx.fillStyle = 'rgba(168,133,74,0.5)';
-  ctx.fillText('結 緣 之 證', W / 2, 1014);
+  ctx.fillText(foot2, W / 2, 1014);
 
   return c.toDataURL('image/png');
 }
