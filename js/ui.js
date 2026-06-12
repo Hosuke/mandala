@@ -18,6 +18,7 @@ export function initUI(h) {
   btnAscent.addEventListener('click', () => h.onTraverse('ascent'));
   btnEnter.addEventListener('click', () => h.onEnter());
   $('btn-toss').addEventListener('click', () => h.onToss());
+  $('btn-sound').addEventListener('click', () => h.onSound());
   $('btn-reset').addEventListener('click', () => h.onReset());
   $('info-close').addEventListener('click', () => api.hideInfo());
   $('info-card').addEventListener('click', () => h.onCard());
@@ -117,6 +118,11 @@ export function initUI(h) {
       caption.classList.remove('pulse');
       void caption.offsetWidth;
       caption.classList.add('pulse');
+    },
+
+    soundUI(mutedNow) {
+      $('btn-sound').textContent = mutedNow ? '默' : '音';
+      $('btn-sound').classList.toggle('lit', !mutedNow);
     },
 
     veilFlash(text, ms = 1300) {

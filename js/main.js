@@ -19,6 +19,7 @@ import {
 } from './layout.js';
 import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture } from './textures.js';
 import { bondCard } from './card.js';
+import * as bell from './bell.js';
 import { stepTweens, tween, smoothstep, damp } from './anim.js';
 import { Rig } from './camera.js';
 import { Traversal } from './traversal.js';
@@ -208,6 +209,14 @@ async function boot() {
     },
     onCard() { if (bondNode) downloadCard(bondNode); },
     onBondClick() { if (bondNode) showInfo(bondNode); },
+    onSound() {
+      bell.initAudio();
+      if (!bell.ready()) return; // 此器無聲，鈕不妄言
+      bell.startDrone();
+      bell.setMuted(!bell.isMuted());
+      ui.soundUI(bell.isMuted());
+      if (!bell.isMuted()) bell.strike(bell.FAMILY_FREQ.butsu, { gain: 0.16, dur: 5 });
+    },
     onReset() {
       cancelToss();
       if (trav.active) trav.stop();
@@ -226,7 +235,12 @@ async function boot() {
   ui.setRealm(0);
 
   const trav = new Traversal({
-    caption: (head, title, text, i, n) => ui.caption(head, title, text, i, n),
+    caption(head, title, text, i, n) {
+      ui.caption(head, title, text, i, n);
+      if (bell.ready() && !bell.isMuted()) {
+        bell.strike(i % 2 ? 164.8 : 146.8, { gain: 0.1, dur: 4.5 }); // 換會一磬
+      }
+    },
     focusAssembly(key) {
       state.focusKey = key;
       rig.focusOverride = key
@@ -296,6 +310,10 @@ async function boot() {
     const name = (bondSide === 't' ? best.d.t : best.d.k).zh;
     ui.setBond(`結緣之尊 · ${name}`);
     ui.announce('投花得佛', `花落 · ${name}`, '花不擇尊，尊已待汝。自今而後，此尊與汝相應。');
+    if (bell.ready() && !bell.isMuted()) {
+      bell.strike(bell.FAMILY_FREQ[best.d.family] * 2, { gain: 0.2, dur: 6 });
+      setTimeout(() => bell.strike(bell.FAMILY_FREQ[best.d.family], { gain: 0.22, dur: 9 }), 380);
+    }
     ui.hideCaption(9000);
     showInfo(best);
     if (state.entered) {
@@ -350,6 +368,7 @@ async function boot() {
     if (on) {
       if (trav.active) trav.stop();
       rig.enter();
+      if (bell.ready() && !bell.isMuted()) bell.strike(98, { gain: 0.3, dur: 11 }); // 入壇之鐘
     } else rig.exit();
     ui.enterUI(on);
     const from = state.stand, to = on ? 1 : 0;
@@ -422,6 +441,9 @@ async function boot() {
       loc, desc: d.desc, mantra: d.mantra,
     });
     ui.showCardButton(ref === bondNode); // 證卡唯結緣之尊可取
+    if (bell.ready() && !bell.isMuted()) {
+      bell.strike(bell.FAMILY_FREQ[d.family] * (d.id === 'center' ? 0.75 : 1), { gain: 0.18 });
+    }
   }
 
   // ── 主迴圈 ──
