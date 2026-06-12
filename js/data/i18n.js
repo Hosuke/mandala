@@ -38,7 +38,9 @@ const UI_ZH = {
   cardFoot2: '結 緣 之 證',
   cardDate: d => `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`,
   cardFile: n => `結緣之證-${n}.png`,
+  kodoBtn: '講堂',
   titles: {
+    kodo: '羯磨壇：東寺講堂二十一尊，三輪身之陣',
     descent: '下轉門：佛成為世界之路',
     ascent: '上轉門：眾生成佛之路',
     form: '轉相：法曼荼羅（種字）→ 三昧耶曼荼羅（標幟）→ 大曼荼羅（尊形）',
@@ -78,7 +80,9 @@ const UI_EN = {
   cardFoot2: 'C E R T I F I C A T E   O F   B O N D',
   cardDate: d => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
   cardFile: n => `bond-${n}.png`,
+  kodoBtn: 'Kōdō',
   titles: {
+    kodo: 'Karma-maṇḍala: the 21 statues of the Tōji Lecture Hall, the three wheel-bodies in formation',
     descent: 'Gate of Descent: the path by which the buddha becomes the world',
     ascent: 'Gate of Ascent: the path by which beings become the buddha',
     form: 'Change aspect: Dharma (seed) → Samaya (emblem) → Mahā (form)',

@@ -22,7 +22,9 @@ import {
   uiTable, COURT_EN, ASM_EN, CIRCLE_EN, FAMILY_EN, FORMVAR_EN,
   FORM_I18N, TAIZO_I18N, ASM_I18N, STAGE_I18N, DESC_I18N,
 } from './data/i18n.js';
-import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture } from './textures.js';
+import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture, matcapTexture } from './textures.js';
+import { NEW_DEITIES, SANRINJIN, KODO_LAYOUT, KODO_I18N } from './data/kodo.js';
+import { buildSamaya } from './samaya3d.js';
 import { bondCard } from './card.js';
 import * as bell from './bell.js';
 import { Goso } from './goso.js';
@@ -62,7 +64,20 @@ const state = {
   stand: 0, entered: false,
   focusKey: null, focusRing: null, travDir: null,
   form: 'bija', // 四曼之相：bija 法 · samaya 三昧耶 · figure 大
+  kodo: false,  // 羯磨壇（東寺講堂廿一尊）
 };
+
+// 講堂所缺四尊（kodoOnly）併入圖：flat 記錄包為 k 面，行狀譯文併入 i18n
+const KODO_RECORDS = NEW_DEITIES.map(r => ({
+  id: r.id, family: r.family, samaya: r.samaya, kodoOnly: true,
+  k: { zh: r.zh, sk: r.sk, bija: r.bija },
+  desc: r.desc,
+}));
+for (const r of NEW_DEITIES) {
+  DESC_I18N.en[r.id] = r.descEn;
+  DESC_I18N.ja[r.id] = r.descJa;
+}
+const ALL_DEITIES = [...DEITIES, ...KODO_RECORDS];
 
 const FORMS = [
   { key: 'bija', zh: '法曼荼羅', sub: '種字', desc: '以悉曇種字現諸尊——音聲文字之相。' },
@@ -112,7 +127,7 @@ async function boot() {
   // ── 真身節點（形變之主體）──
   const nodes = [];
   const nodeById = {};
-  for (const d of DEITIES) {
+  for (const d of ALL_DEITIES) {
     if (d.rishuOnly) continue;
     const { posT, posK, hasT, hasK } = morphTargets(d);
     const mat = new THREE.MeshBasicMaterial({
@@ -125,11 +140,15 @@ async function boot() {
     scene.add(group);
 
     const ringT = hasT ? (d.t.court === 'chudai' ? 0 : courtByKey[d.t.court].ring) : 0;
+    const kodoXZ = KODO_LAYOUT[d.id];
     const node = {
       d, group, mesh, posT, posK, hasT, hasK, ringT,
       delay: ringT * 0.045,
       sizeT: sizeOfT(d), sizeK: sizeOfK(d),
       hover: 0, mul: 1, kind: 'node',
+      kodoOnly: !!d.kodoOnly,
+      kodoPos: kodoXZ ? new THREE.Vector3(kodoXZ[0], 0, kodoXZ[1]) : null,
+      obj3d: null, // 立體三昧耶法器（緩鑄）
     };
     mesh.userData.ref = node;
     nodes.push(node);
@@ -173,7 +192,11 @@ async function boot() {
   // ── 兩部莊嚴（環・宮・螺旋・名牌）──
   const taizoDecor = makeTaizoDecor();
   const kongoDecor = makeKongoDecor();
-  scene.add(taizoDecor.group, kongoDecor.group);
+  const kodoDecor = makeKodoDecor();
+  scene.add(taizoDecor.group, kongoDecor.group, kodoDecor.group);
+
+  // 立體法器之相質
+  const matcap = matcapTexture();
 
   // ── 脈絡（邊）──
   const edgesT = makeEdges(taizoEdges(), 0xd8b36a);
@@ -220,6 +243,13 @@ async function boot() {
   let kanTimer = null; // 入坐之延時
   let kanPulse = 0;    // 證金剛身時世界之脈動
   let kanDim = 1;      // 入觀時世界之隱顯
+  let kodoMix = 0;     // 羯磨壇之隱顯
+
+  function exitKodo() {
+    if (!state.kodo) return;
+    state.kodo = false;
+    ui.kodoUI(false);
+  }
 
   function exitKan() {
     if (kanTimer) { clearTimeout(kanTimer); kanTimer = null; }
@@ -241,6 +271,7 @@ async function boot() {
     ui.traversalUI(trav?.active ?? false, state.travDir);
     const fi = FORMS.findIndex(f => f.key === state.form);
     ui.formUI((lang === 'zh' ? FORMS[fi] : FORM_I18N[lang][fi]).sub);
+    ui.kodoUI(state.kodo);
     if (bondNode) {
       const a = bondSide === 't' ? bondNode.d.t : bondNode.d.k;
       ui.setBond(T.bondPrefix(a.zh));
@@ -258,6 +289,7 @@ async function boot() {
     onKan() {
       if (goso.active || kanTimer) { exitKan(); return; }
       cancelToss();
+      exitKodo();
       if (trav.active) trav.stop();
       state.lambdaTarget = 1; // 五相成身，金剛界之觀
       ui.setLambda(1);
@@ -272,6 +304,21 @@ async function boot() {
       }, 2300);
     },
     onSpace() { if (goso.active) goso.advance(); },
+    onKodo() {
+      if (state.kodo) { exitKodo(); return; }
+      exitKan();
+      if (trav.active) trav.stop();
+      state.kodo = true;
+      ui.kodoUI(true);
+      const k = KODO_I18N[lang] ?? KODO_I18N.zh;
+      ui.announce(k.head, k.title, k.text);
+      ui.hideCaption(9000);
+      if (rig.mode === 'aerial') {
+        rig.resetView();
+        rig.radius = 64;
+      }
+      if (bell.ready() && !bell.isMuted()) bell.strike(98, { gain: 0.22, dur: 9 });
+    },
     onForm() {
       const i = FORMS.findIndex(f => f.key === state.form);
       const ni = (i + 1) % FORMS.length;
@@ -292,6 +339,7 @@ async function boot() {
     },
     onTraverse(dir) {
       exitKan();
+      exitKodo();
       if (trav.active && state.travDir === dir) { trav.stop(); return; }
       if (trav.active) trav.stop();
       if (state.entered) toggleEnter(false);
@@ -323,6 +371,7 @@ async function boot() {
     },
     onReset() {
       exitKan();
+      exitKodo();
       cancelToss();
       if (trav.active) trav.stop();
       if (state.entered) toggleEnter(false);
@@ -641,6 +690,7 @@ async function boot() {
     kanPulse = Math.max(0, kanPulse - dt * 0.3); // 證身之脈漸息
     // 入觀世界漸隱（內觀）；第五相佛身圓滿，世界復明——出定見世界
     kanDim = damp(kanDim, goso.active && goso.stage < 4 ? 0.14 : 1, 2.2, dt);
+    kodoMix = damp(kodoMix, state.kodo ? 1 : 0, 2.6, dt);
 
     const l = state.lambda;
     const stand = state.stand;
@@ -651,12 +701,18 @@ async function boot() {
     // 真身
     for (const n of nodes) {
       const eff = effLambda(n);
-      n.group.position.set(
-        n.posT.x + (n.posK.x - n.posT.x) * eff,
-        0.6,
-        n.posT.z + (n.posK.z - n.posT.z) * eff,
-      );
-      const opBase = n.hasT && n.hasK ? 1 : (n.hasT ? 1 - eff : eff);
+      let px = n.posT.x + (n.posK.x - n.posT.x) * eff;
+      let pz = n.posT.z + (n.posK.z - n.posT.z) * eff;
+      if (n.kodoPos) {
+        // 講堂成員飛赴壇位
+        px += (n.kodoPos.x - px) * kodoMix;
+        pz += (n.kodoPos.z - pz) * kodoMix;
+      }
+      n.group.position.set(px, 0.6, pz);
+      let opBase = n.hasT && n.hasK ? 1 : (n.hasT ? 1 - eff : eff);
+      if (n.kodoOnly) opBase = kodoMix;                      // 缺尊唯於講堂現
+      else if (!n.kodoPos) opBase *= 1 - kodoMix;            // 非廿一尊者隱
+      else opBase += (1 - opBase) * kodoMix;                 // 壇上成員全顯
       let mul = 1;
       if (state.focusRing != null) mul = n.ringT === state.focusRing ? 1 : 0.2;
       else if (state.focusKey) mul = state.focusKey === 'jojin' ? 1 : 0.22;
@@ -672,6 +728,23 @@ async function boot() {
         (1 + 0.13 * n.hover + 0.3 * advaya + 0.2 * kanPulse);
       n.mesh.scale.setScalar(size);
       poseDisc(n, size, stand);
+
+      // 立體三昧耶法器：標幟之相、立於壇中，乃浮現掌前
+      const want3d = state.form === 'samaya' && stand > 0.4 &&
+        n.mesh.material.opacity > 0.15;
+      if (want3d && !n.obj3d) {
+        n.obj3d = buildSamaya(n.d.samaya, { matcap, color: FAMILY_COLOR[n.d.family] });
+        n.group.add(n.obj3d);
+      }
+      if (n.obj3d) {
+        n.obj3d.visible = want3d;
+        if (want3d) {
+          n.obj3d.rotation.y += dt * 0.5;
+          n.obj3d.scale.setScalar(size * 0.6);
+          n.obj3d.position.y = size * 0.62 +
+            Math.sin(elapsed * 1.1 + n.delay * 40) * 0.07;
+        }
+      }
     }
 
     // 回響
@@ -680,19 +753,21 @@ async function boot() {
       if (state.focusKey) mul = e.assembly.key === state.focusKey ? 1 : 0.16;
       e.groupMul.v = damp(e.groupMul.v, mul, 6, dt);
       e.hover = damp(e.hover, hovered === e ? 1 : 0, 10, dt);
-      e.mesh.material.opacity = echoFade * e.groupMul.v * kanDim;
+      e.mesh.material.opacity = echoFade * e.groupMul.v * kanDim * (1 - kodoMix);
       const size = e.size * (1 + 0.13 * e.hover + 0.2 * kanPulse);
       e.mesh.scale.setScalar(size);
       poseDisc(e, size, stand);
     }
 
     // 莊嚴
-    for (const m of taizoDecor.mats) m.m.opacity = m.base * taizoFade * kanDim;
-    for (const m of kongoDecor.mats) m.m.opacity = m.base * kongoFade * kanDim;
+    const notKodo = 1 - kodoMix;
+    for (const m of taizoDecor.mats) m.m.opacity = m.base * taizoFade * kanDim * notKodo;
+    for (const m of kongoDecor.mats) m.m.opacity = m.base * kongoFade * kanDim * notKodo;
+    for (const m of kodoDecor.mats) m.m.opacity = m.base * kodoMix * kanDim;
     edgesT.update(nodeById);
-    edgesT.lines.material.opacity = 0.15 * taizoFade * kanDim;
+    edgesT.lines.material.opacity = 0.15 * taizoFade * kanDim * notKodo;
     edgesK.update(nodeById);
-    edgesK.lines.material.opacity = (0.15 + 0.3 * kanPulse) * kongoFade * kanDim *
+    edgesK.lines.material.opacity = (0.15 + 0.3 * kanPulse) * kongoFade * kanDim * notKodo *
       (state.focusKey && state.focusKey !== 'jojin' ? 0.25 : 1);
 
     // 彗星（金剛界遍歷）
@@ -931,6 +1006,40 @@ function makeKongoDecor() {
   const title = makeLabelSprite('金剛界九會', new THREE.Vector3(H + 7, 2, 0));
   mats.push({ m: title.material, base: 0.55 });
   group.add(title);
+  return { group, mats };
+}
+
+// 羯磨壇之莊嚴：壇緣、三輪身五行之線、三柱之銘
+function makeKodoDecor() {
+  const group = new THREE.Group();
+  const mats = [];
+  const goldLine = (pts, base) => {
+    const m = new THREE.LineBasicMaterial({ color: 0xd8b36a, transparent: true, opacity: 0 });
+    mats.push({ m, base });
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), m);
+    line.renderOrder = 1;
+    group.add(line);
+  };
+  // 壇之外緣（56×20）
+  goldLine([
+    new THREE.Vector3(-30, 0.25, -11), new THREE.Vector3(30, 0.25, -11),
+    new THREE.Vector3(30, 0.25, 11), new THREE.Vector3(-30, 0.25, 11),
+    new THREE.Vector3(-30, 0.25, -11),
+  ], 0.2);
+  // 三輪身五行：同一智之三現，連為一線
+  for (const row of SANRINJIN) {
+    const pts = [row.myoo, row.butsu, row.bosatsu]
+      .map(id => KODO_LAYOUT[id])
+      .map(([x, z]) => new THREE.Vector3(x, 0.3, z));
+    goldLine(pts, 0.16);
+  }
+  // 三柱之銘（壇上之字，恆以漢字）
+  const ringNames = KODO_I18N.zh.rings;
+  for (const [i, x] of [[0, 0], [1, 18], [2, -18]]) {
+    const sp = makeLabelSprite(ringNames[i], new THREE.Vector3(x, 1.4, -14.5));
+    mats.push({ m: sp.material, base: 0.8 });
+    group.add(sp);
+  }
   return { group, mats };
 }
 

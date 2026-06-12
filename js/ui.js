@@ -20,6 +20,7 @@ export function initUI(h, T0) {
   $('btn-toss').addEventListener('click', () => h.onToss());
   $('btn-kan').addEventListener('click', () => h.onKan());
   $('btn-form').addEventListener('click', () => h.onForm());
+  $('btn-kodo').addEventListener('click', () => h.onKodo());
   $('btn-sound').addEventListener('click', () => h.onSound());
   $('btn-reset').addEventListener('click', () => h.onReset());
   $('info-close').addEventListener('click', () => api.hideInfo());
@@ -124,6 +125,8 @@ export function initUI(h, T0) {
 
     formUI(sub) { $('btn-form').textContent = sub; },
 
+    kodoUI(active) { $('btn-kodo').classList.toggle('lit', active); },
+
     kanUI(active) {
       $('btn-kan').textContent = active ? T.kanExit : T.kan;
       $('btn-kan').classList.toggle('lit', active);
@@ -147,10 +150,11 @@ export function initUI(h, T0) {
       const TITLE_IDS = {
         descent: 'btn-descent', ascent: 'btn-ascent', form: 'btn-form',
         enter: 'btn-enter', toss: 'btn-toss', kan: 'btn-kan',
-        sound: 'btn-sound', reset: 'btn-reset',
+        kodo: 'btn-kodo', sound: 'btn-sound', reset: 'btn-reset',
       };
       for (const [k, id] of Object.entries(TITLE_IDS)) $(id).title = T.titles[k];
       // 靜物之字
+      $('btn-kodo').textContent = T.kodoBtn;
       $('btn-toss').textContent = T.toss;
       $('btn-reset').textContent = T.reset;
       $('info-card').textContent = T.cardBtn;

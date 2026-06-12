@@ -789,6 +789,31 @@ export function petalTexture() {
   return tex;
 }
 
+// 金質 matcap：立體法器之相質（無光照世界中以此得體感）
+export function matcapTexture() {
+  const key = 'matcap-gold';
+  if (cache.has(key)) return cache.get(key);
+  const S = 256, c = canvas(S), ctx = c.getContext('2d');
+  let g = ctx.createRadialGradient(S * 0.36, S * 0.32, S * 0.04, S * 0.5, S * 0.5, S * 0.62);
+  g.addColorStop(0, '#fdf3d2');
+  g.addColorStop(0.28, '#e7c98a');
+  g.addColorStop(0.62, '#9a7437');
+  g.addColorStop(0.88, '#4d3416');
+  g.addColorStop(1, '#241606');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  // 底緣回光（如金屬之反照）
+  g = ctx.createRadialGradient(S * 0.62, S * 0.85, S * 0.02, S * 0.62, S * 0.85, S * 0.3);
+  g.addColorStop(0, 'rgba(244,222,160,0.5)');
+  g.addColorStop(1, 'rgba(244,222,160,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  cache.set(key, tex);
+  return tex;
+}
+
 export function ringTexture(color = '#d8b36a') {
   const key = `ring|${color}`;
   if (cache.has(key)) return cache.get(key);

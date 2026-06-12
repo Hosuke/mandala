@@ -72,7 +72,9 @@ export const DEITIES = [
     desc: '文殊即金剛利：般若之劍，斷一切戲論。',
   },
   {
-    id: 'miroku', family: 'butsu', samaya: 'banner',
+    // samaya 從 banner 校為 wheel：金剛因（纔發心轉法輪）三昧耶形為八輻輪；
+    // 幢乃金剛幢（k-do）之幟，hetu/ketu 之混也。考據對抗校驗通過（2026-06）。
+    id: 'miroku', family: 'butsu', samaya: 'wheel',
     t: { zh: '彌勒菩薩', sk: 'Maitreya', bija: 'yu', court: 'chudai', slot: 'NE' },
     k: { zh: '金剛因菩薩', sk: 'Vajrahetu', bija: 'maṃ', circle: 'west', slot: 2 },
     desc: '彌勒即金剛因：當來之果，已在因中轉法輪。',
