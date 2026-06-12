@@ -20,6 +20,7 @@ import {
 import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture } from './textures.js';
 import { bondCard } from './card.js';
 import * as bell from './bell.js';
+import { Goso, stageHead } from './goso.js';
 import { stepTweens, tween, smoothstep, damp } from './anim.js';
 import { Rig } from './camera.js';
 import { Traversal } from './traversal.js';
@@ -181,6 +182,22 @@ async function boot() {
   bondGlow.renderOrder = 6;
   scene.add(bondGlow);
 
+  // ── 觀法（五相成身觀）──
+  let goso = null;     // 於 ui 之後立（互相成緣）
+  let kanTimer = null; // 入坐之延時
+  let kanPulse = 0;    // 證金剛身時世界之脈動
+  let kanDim = 1;      // 入觀時世界之隱顯
+
+  function exitKan() {
+    if (kanTimer) { clearTimeout(kanTimer); kanTimer = null; }
+    if (goso?.active) goso.end();
+    else if (rig.frozen) {
+      rig.frozen = false;
+      ui.kanUI(false);
+      ui.enterUI(state.entered);
+    }
+  }
+
   // ── 介面 ──
   const ui = initUI({
     onLambda(v, reflect) {
@@ -188,7 +205,25 @@ async function boot() {
       if (reflect) ui.setLambda(v);
       if (trav.active) trav.stop();
     },
+    onKan() {
+      if (goso.active || kanTimer) { exitKan(); return; }
+      cancelToss();
+      if (trav.active) trav.stop();
+      state.lambdaTarget = 1; // 五相成身，金剛界之觀
+      ui.setLambda(1);
+      if (!state.entered) toggleEnter(true);
+      rig.enterAt(new THREE.Vector3(0, 2.3, 7.6)); // 坐於成身會壇心之南，面大日
+      rig.frozen = true;
+      ui.kanUI(true);
+      ui.hideInfo();
+      kanTimer = setTimeout(() => {
+        kanTimer = null;
+        if (rig.frozen) goso.start();
+      }, 2300);
+    },
+    onSpace() { if (goso.active) goso.advance(); },
     onTraverse(dir) {
+      exitKan();
       if (trav.active && state.travDir === dir) { trav.stop(); return; }
       if (trav.active) trav.stop();
       if (state.entered) toggleEnter(false);
@@ -199,8 +234,9 @@ async function boot() {
       trav.start(realm, dir);
       ui.traversalUI(true, dir);
     },
-    onEnter() { toggleEnter(!state.entered); },
+    onEnter() { exitKan(); toggleEnter(!state.entered); },
     onToss() {
+      exitKan();
       if (tossTimer) return;
       if (!state.entered) {
         toggleEnter(true);
@@ -218,6 +254,7 @@ async function boot() {
       if (!bell.isMuted()) bell.strike(bell.FAMILY_FREQ.butsu, { gain: 0.16, dur: 5 });
     },
     onReset() {
+      exitKan();
       cancelToss();
       if (trav.active) trav.stop();
       if (state.entered) toggleEnter(false);
@@ -225,6 +262,7 @@ async function boot() {
       ui.hideInfo();
     },
     onEscape() {
+      if (goso?.active || kanTimer) { exitKan(); return; }
       cancelToss();
       if (state.entered) toggleEnter(false);
       else if (trav.active) trav.stop();
@@ -262,12 +300,19 @@ async function boot() {
 
   function cancelToss() {
     if (tossTimer) { clearTimeout(tossTimer); tossTimer = null; }
+    // 空中之花亦撤——儀軌既罷，花不再落
+    for (const p of petals) {
+      scene.remove(p.mesh);
+      p.mesh.material.dispose();
+    }
+    petals.length = 0;
   }
 
   function doToss() {
     if (!state.entered) return; // 儀軌中途被撤，不擲
     ui.veilFlash('閉 目 擲 花');
-    setTimeout(() => {
+    tossTimer = setTimeout(() => {
+      tossTimer = null;
       if (!state.entered) return;
       const fwd = new THREE.Vector3();
       camera.getWorldDirection(fwd);
@@ -361,6 +406,23 @@ async function boot() {
     }
   } catch { /* 私隱模式無妨 */ }
 
+  // 觀法之軀（ui 既立，乃造）
+  goso = new Goso(scene, camera, {
+    stage(idx, s) {
+      ui.announce(stageHead(idx), s.title, `${s.text}\n${s.mantra}`);
+      if (bell.ready() && !bell.isMuted()) bell.strike(s.freq, { gain: 0.2, dur: 9 });
+    },
+    flash: () => ui.flash(),
+    worldPulse() { kanPulse = 1; },
+    closed() {
+      rig.frozen = false;
+      ui.kanUI(false);
+      ui.enterUI(state.entered);
+      ui.announce('五相成身觀', '出觀', '觀已，壇城如故，汝亦如故——而非故。');
+      ui.hideCaption(6500);
+    },
+  });
+
   function toggleEnter(on) {
     if (on === state.entered) return;
     if (!on) cancelToss(); // 出壇即罷投
@@ -390,6 +452,12 @@ async function boot() {
   }
   canvas.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
   canvas.addEventListener('pointermove', e => {
+    if (goso.active || kanTimer) {
+      hovered = null;
+      canvas.style.cursor = '';
+      ui.tooltip(0, 0, null);
+      return;
+    }
     hovered = pickAt(e.clientX, e.clientY);
     canvas.style.cursor = hovered ? 'pointer' : '';
     ui.tooltip(e.clientX, e.clientY, hovered ? displayName(hovered) : null);
@@ -399,6 +467,8 @@ async function boot() {
     const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
     downAt = null;
     if (moved > 6) return;
+    if (goso.active) { goso.advance(); return; } // 觀中輕觸即進
+    if (kanTimer) return; // 入坐未定，不拾
     const ref = pickAt(e.clientX, e.clientY); // 觸屏無 hover，臨點即求交
     if (ref) showInfo(ref);
   });
@@ -463,6 +533,10 @@ async function boot() {
     state.lambda = damp(state.lambda, state.lambdaTarget, 4.2, dt);
     ui.setRealm(state.lambda);
     trav.update(dt);
+    goso.update(dt);
+    kanPulse = Math.max(0, kanPulse - dt * 0.3); // 證身之脈漸息
+    // 入觀世界漸隱（內觀）；第五相佛身圓滿，世界復明——出定見世界
+    kanDim = damp(kanDim, goso.active && goso.stage < 4 ? 0.14 : 1, 2.2, dt);
 
     const l = state.lambda;
     const stand = state.stand;
@@ -484,7 +558,7 @@ async function boot() {
       else if (state.focusKey) mul = state.focusKey === 'jojin' ? 1 : 0.22;
       n.mul = damp(n.mul, mul, 6, dt);
       n.hover = damp(n.hover, hovered === n ? 1 : 0, 10, dt);
-      n.mesh.material.opacity = opBase * n.mul;
+      n.mesh.material.opacity = opBase * n.mul * kanDim;
       if (n.hasT && n.hasK && n.texT !== n.texK) {
         const want = eff < 0.5 ? n.texT : n.texK;
         if (n.mesh.material.map !== want) n.mesh.material.map = want;
@@ -492,7 +566,7 @@ async function boot() {
       // 不二之際，兩部同體之錨點微明而脹——結構於中途可見
       const advaya = n.hasT && n.hasK ? Math.max(0, 1 - Math.abs(l - 0.5) * 2.6) : 0;
       const size = (n.sizeT + (n.sizeK - n.sizeT) * eff) * (0.55 + 0.45 * opBase) *
-        (1 + 0.13 * n.hover + 0.3 * advaya);
+        (1 + 0.13 * n.hover + 0.3 * advaya + 0.2 * kanPulse);
       n.mesh.scale.setScalar(size);
       poseDisc(n, size, stand);
     }
@@ -503,19 +577,19 @@ async function boot() {
       if (state.focusKey) mul = e.assembly.key === state.focusKey ? 1 : 0.16;
       e.groupMul.v = damp(e.groupMul.v, mul, 6, dt);
       e.hover = damp(e.hover, hovered === e ? 1 : 0, 10, dt);
-      e.mesh.material.opacity = echoFade * e.groupMul.v;
-      const size = e.size * (1 + 0.13 * e.hover);
+      e.mesh.material.opacity = echoFade * e.groupMul.v * kanDim;
+      const size = e.size * (1 + 0.13 * e.hover + 0.2 * kanPulse);
       e.mesh.scale.setScalar(size);
       poseDisc(e, size, stand);
     }
 
     // 莊嚴
-    for (const m of taizoDecor.mats) m.m.opacity = m.base * taizoFade;
-    for (const m of kongoDecor.mats) m.m.opacity = m.base * kongoFade;
+    for (const m of taizoDecor.mats) m.m.opacity = m.base * taizoFade * kanDim;
+    for (const m of kongoDecor.mats) m.m.opacity = m.base * kongoFade * kanDim;
     edgesT.update(nodeById);
-    edgesT.lines.material.opacity = 0.15 * taizoFade;
+    edgesT.lines.material.opacity = 0.15 * taizoFade * kanDim;
     edgesK.update(nodeById);
-    edgesK.lines.material.opacity = 0.15 * kongoFade *
+    edgesK.lines.material.opacity = (0.15 + 0.3 * kanPulse) * kongoFade * kanDim *
       (state.focusKey && state.focusKey !== 'jojin' ? 0.25 : 1);
 
     // 彗星（金剛界遍歷）
@@ -562,6 +636,7 @@ async function boot() {
       bondGlow.scale.setScalar(bondNode.mesh.scale.x * 1.9 + Math.sin(elapsed * 2.2) * 0.4);
     }
 
+    dust.points.material.opacity = 0.45 * Math.max(kanDim, 0.35); // 觀中砂子猶在，如念之餘
     dust.update(dt, elapsed);
     rig.update(dt);
     renderer.render(scene, camera);

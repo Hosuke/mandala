@@ -34,6 +34,7 @@ export class Rig {
 
     this.idleTime = 0;
     this.glideSpeed = 2.4;
+    this.frozen = false; // 觀坐：可環顧，不可行步
 
     this._bind();
   }
@@ -78,11 +79,16 @@ export class Rig {
   }
 
   enter() {
-    this.mode = 'fp';
     // 立於南與東南兩葉之間的空當，面向壇心
     const a = 292.5 * Math.PI / 180, r = 10.2;
-    this.fpPos.set(Math.cos(a) * r, 2.5, -Math.sin(a) * r);
-    this.yaw = Math.atan2(this.fpPos.z / r, -this.fpPos.x / r) - Math.PI / 2;
+    this.enterAt(new THREE.Vector3(Math.cos(a) * r, 2.5, -Math.sin(a) * r));
+  }
+
+  enterAt(pos) {
+    this.mode = 'fp';
+    this.fpPos.copy(pos);
+    const r = Math.hypot(pos.x, pos.z) || 1;
+    this.yaw = Math.atan2(pos.z / r, -pos.x / r) - Math.PI / 2; // 面向壇心
     this.pitch = 0.04;
   }
 
@@ -117,7 +123,7 @@ export class Rig {
       dLook = target;
     } else {
       // 入壇行步
-      const speed = 7.5;
+      const speed = this.frozen ? 0 : 7.5;
       const fwd = new THREE.Vector3(Math.cos(this.yaw + Math.PI / 2), 0, -Math.sin(this.yaw + Math.PI / 2));
       const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
       const v = new THREE.Vector3();

@@ -18,6 +18,7 @@ export function initUI(h) {
   btnAscent.addEventListener('click', () => h.onTraverse('ascent'));
   btnEnter.addEventListener('click', () => h.onEnter());
   $('btn-toss').addEventListener('click', () => h.onToss());
+  $('btn-kan').addEventListener('click', () => h.onKan());
   $('btn-sound').addEventListener('click', () => h.onSound());
   $('btn-reset').addEventListener('click', () => h.onReset());
   $('info-close').addEventListener('click', () => api.hideInfo());
@@ -28,6 +29,7 @@ export function initUI(h) {
     if (e.code === 'ArrowLeft') h.onLambda(Math.max(0, lambda.value / 1000 - 0.04), true);
     if (e.code === 'ArrowRight') h.onLambda(Math.min(1, lambda.value / 1000 + 0.04), true);
     if (e.code === 'Escape') h.onEscape();
+    if (e.code === 'Space' && h.onSpace) { e.preventDefault(); h.onSpace(); }
   });
 
   let captionTimer = null;
@@ -118,6 +120,18 @@ export function initUI(h) {
       caption.classList.remove('pulse');
       void caption.offsetWidth;
       caption.classList.add('pulse');
+    },
+
+    kanUI(active) {
+      $('btn-kan').textContent = active ? '出觀' : '觀法';
+      $('btn-kan').classList.toggle('lit', active);
+      if (active) $('hint').textContent = '輕觸以進 · 觀無促令 · Esc 出觀';
+    },
+
+    flash() {
+      const f = $('flash');
+      f.classList.add('on');
+      setTimeout(() => f.classList.remove('on'), 200);
     },
 
     soundUI(mutedNow) {

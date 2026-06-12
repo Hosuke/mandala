@@ -507,6 +507,82 @@ export function glowTexture(color = 0xe9cd8a) {
   return tex;
 }
 
+// 心月輪（五相成身觀）：霧中之月與澄明之月
+export function moonTexture(clear) {
+  const key = `kanmoon|${clear}`;
+  if (cache.has(key)) return cache.get(key);
+  const S = 512, c = canvas(S), ctx = c.getContext('2d');
+  const cx = S / 2, R = S * 0.36;
+  if (clear) {
+    // 澄明：皎潔之輪，金緣微光
+    let g = ctx.createRadialGradient(cx, cx, 0, cx, cx, R);
+    g.addColorStop(0, 'rgba(240,238,228,0.95)');
+    g.addColorStop(0.72, 'rgba(225,224,210,0.8)');
+    g.addColorStop(0.97, 'rgba(214,206,182,0.55)');
+    g.addColorStop(1, 'rgba(214,206,182,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx, cx, R, 0, 7); ctx.fill();
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = GOLD;
+    ctx.shadowBlur = 22;
+    ctx.beginPath(); ctx.arc(cx, cx, R, 0, 7); ctx.stroke();
+    g = ctx.createRadialGradient(cx, cx, R, cx, cx, R * 1.38);
+    g.addColorStop(0, 'rgba(233,205,138,0.3)');
+    g.addColorStop(1, 'rgba(233,205,138,0)');
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, S, S);
+  } else {
+    // 霧月：光在霧後，未嘗滅也
+    let g = ctx.createRadialGradient(cx, cx, 0, cx, cx, R * 1.35);
+    g.addColorStop(0, 'rgba(214,218,224,0.5)');
+    g.addColorStop(0.45, 'rgba(190,198,212,0.26)');
+    g.addColorStop(0.8, 'rgba(160,170,190,0.09)');
+    g.addColorStop(1, 'rgba(160,170,190,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, S, S);
+    // 霧之絮
+    for (let i = 0; i < 14; i++) {
+      const a = Math.random() * Math.PI * 2, r = Math.random() * R;
+      const x = cx + Math.cos(a) * r, y = cx + Math.sin(a) * r;
+      const rr = S * (0.05 + Math.random() * 0.1);
+      g = ctx.createRadialGradient(x, y, 0, x, y, rr);
+      g.addColorStop(0, 'rgba(150,160,180,0.10)');
+      g.addColorStop(1, 'rgba(150,160,180,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2);
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  cache.set(key, tex);
+  return tex;
+}
+
+// 觀中五鈷金剛（大相）
+export function kanVajraTexture() {
+  const key = 'kanvajra';
+  if (cache.has(key)) return cache.get(key);
+  const S = 512, c = canvas(S), ctx = c.getContext('2d');
+  ctx.translate(S / 2, S / 2);
+  ctx.strokeStyle = '#e9cd8a';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = '#e9cd8a';
+  ctx.shadowBlur = 26;
+  ICONS.vajra5(ctx, S * 0.43);
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = 2.4;
+  ctx.strokeStyle = '#fdf6e3';
+  ICONS.vajra5(ctx, S * 0.43);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  cache.set(key, tex);
+  return tex;
+}
+
 // 投花之瓣
 export function petalTexture() {
   const key = 'petal';

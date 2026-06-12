@@ -259,6 +259,7 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   font-size: 14.5px;
   line-height: 1.9;
   color: var(--ink-soft);
+  white-space: pre-line; /* 法語下可綴真言一行 */
 }
 
 /* 尊位牌 */
@@ -374,6 +375,19 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   text-indent: .65em;
   color: var(--gold-dim);
 }
+
+/* 證金剛身之光 */
+#flash {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  background: radial-gradient(circle at 50% 46%,
+    rgba(244, 230, 192, .92), rgba(216, 179, 106, .55) 40%, rgba(216, 179, 106, 0) 75%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.8s ease-out;
+}
+#flash.on { opacity: 1; transition: opacity .12s ease-in; }
 
 /* 結緣之行 */
 #bond-line {
