@@ -12,6 +12,31 @@ export function initUI(h, T0) {
   const btnDescent = $('btn-descent');
   const btnAscent = $('btn-ascent');
   const btnEnter = $('btn-enter');
+  const btnFold = $('btn-fold');
+  const controls = $('controls');
+
+  // 法具欄之收展：記於 localStorage；無所記而屏短（<700）者，初即收之
+  let folded = false;
+  try {
+    const saved = localStorage.getItem('mandala-fold');
+    folded = saved !== null ? saved === '1' : window.innerHeight < 700;
+  } catch { folded = window.innerHeight < 700; /* 私隱模式 */ }
+  const applyFold = () => {
+    controls.classList.toggle('folded', folded);
+    btnFold.textContent = folded ? T.fold : T.unfold; // 收則示「具」，招人啟之
+    btnFold.classList.toggle('lit', folded);
+    // 收起者亦絕鍵焦——目不可及，鍵亦不可及
+    controls.querySelectorAll('button:not(#btn-fold)').forEach(b => {
+      b.tabIndex = folded ? -1 : 0;
+      b.setAttribute('aria-hidden', folded ? 'true' : 'false');
+    });
+  };
+  btnFold.addEventListener('click', () => {
+    folded = !folded;
+    try { localStorage.setItem('mandala-fold', folded ? '1' : '0'); } catch { /* 私隱模式 */ }
+    applyFold();
+  });
+  applyFold();
 
   lambda.addEventListener('input', () => h.onLambda(lambda.value / 1000));
   btnDescent.addEventListener('click', () => h.onTraverse('descent'));
@@ -151,9 +176,11 @@ export function initUI(h, T0) {
         descent: 'btn-descent', ascent: 'btn-ascent', form: 'btn-form',
         enter: 'btn-enter', toss: 'btn-toss', kan: 'btn-kan',
         kodo: 'btn-kodo', sound: 'btn-sound', reset: 'btn-reset',
+        fold: 'btn-fold',
       };
       for (const [k, id] of Object.entries(TITLE_IDS)) $(id).title = T.titles[k];
       // 靜物之字
+      btnFold.textContent = folded ? T.fold : T.unfold;
       $('btn-kodo').textContent = T.kodoBtn;
       $('btn-toss').textContent = T.toss;
       $('btn-reset').textContent = T.reset;

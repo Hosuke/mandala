@@ -315,164 +315,300 @@ export function deityType(zh) {
   return 'bosatsu';
 }
 
+// 白描尊形：量度取造像之意 —— 坐像連蓮臺約四頭餘，肩闊二頭，趺坐成三角穩基。
+// 筆有粗細之序：外輪廓粗筆，內細部細筆；疏朗為上，不取鏤密。
 function drawFigure(ctx, R, type, samaya, { chiken = false } = {}) {
-  const s = R * 0.013; // 基準尺
+  const s = R * 0.0168;                          // 基準尺（隨輪幅自適）
+  const W_OUT = R * 0.0285, W_IN = R * 0.0163;   // 外輪廓筆 ≈2.6 · 內細部筆 ≈1.5（於 256px）
   ctx.save();
-  ctx.lineWidth = 2.4;
+  ctx.lineWidth = W_OUT;
 
-  const head = (cy, r) => { ctx.beginPath(); ctx.arc(0, cy, r, 0, 7); ctx.stroke(); };
-  const halo = (cy, r) => {
-    ctx.save(); ctx.globalAlpha *= 0.55;
-    ctx.beginPath(); ctx.arc(0, cy, r, 0, 7); ctx.stroke();
-    ctx.restore();
+  // ── 小工具：座標皆以 s 為單位 ──
+  const P = (pts, close = false) => strokePath(ctx, pts.map(([x, y]) => [x * s, y * s]), close);
+  const A = (x, y, r, a0 = 0, a1 = 7) => {
+    ctx.beginPath(); ctx.arc(x * s, y * s, r * s, a0, a1); ctx.stroke();
   };
-  const lotusSeat = (cy) => {
-    for (const dx of [-16, 0, 16]) {
-      ctx.beginPath();
-      ctx.arc(dx * s, cy + 6 * s, 9 * s, Math.PI * 1.15, Math.PI * 1.85);
-      ctx.stroke();
-    }
-    ctx.beginPath();
-    ctx.moveTo(-26 * s, cy + 7 * s); ctx.lineTo(26 * s, cy + 7 * s);
-    ctx.stroke();
+  const Q = (x0, y0, cx, cy, x1, y1) => {
+    ctx.beginPath(); ctx.moveTo(x0 * s, y0 * s);
+    ctx.quadraticCurveTo(cx * s, cy * s, x1 * s, y1 * s); ctx.stroke();
   };
-  const seated = (cy) => { // 結跏趺坐之略
-    ctx.beginPath();
-    ctx.moveTo(-22 * s, cy);
-    ctx.quadraticCurveTo(0, cy + 9 * s, 22 * s, cy);
-    ctx.quadraticCurveTo(0, cy - 4 * s, -22 * s, cy);
-    ctx.stroke();
+  const B = (x0, y0, c1x, c1y, c2x, c2y, x1, y1) => {
+    ctx.beginPath(); ctx.moveTo(x0 * s, y0 * s);
+    ctx.bezierCurveTo(c1x * s, c1y * s, c2x * s, c2y * s, x1 * s, y1 * s); ctx.stroke();
   };
-  const torso = (nY, hipY, w) => {
-    ctx.beginPath();
-    ctx.moveTo(-w * s, nY);
-    ctx.quadraticCurveTo(-w * 1.25 * s, (nY + hipY) / 2, -w * 0.8 * s, hipY);
-    ctx.moveTo(w * s, nY);
-    ctx.quadraticCurveTo(w * 1.25 * s, (nY + hipY) / 2, w * 0.8 * s, hipY);
-    ctx.stroke();
+  const E = (x, y, rx, ry) => {
+    ctx.beginPath(); ctx.ellipse(x * s, y * s, rx * s, ry * s, 0, 0, 7); ctx.stroke();
   };
+  const thin = (fn) => { ctx.save(); ctx.lineWidth = W_IN; fn(); ctx.restore(); };
+  const dim = (a, fn) => { ctx.save(); ctx.globalAlpha *= a; fn(); ctx.restore(); };
+  const dot = (x, y, r) => { ctx.beginPath(); ctx.arc(x * s, y * s, r * s, 0, 7); ctx.fill(); };
   const itemAt = (x, y, scale) => {
     if (!samaya || !ICONS[samaya]) return;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.lineWidth = 1.7;
-    ICONS[samaya](ctx, scale);
+    ctx.save(); ctx.translate(x * s, y * s);
+    ctx.lineWidth = W_IN;
+    ICONS[samaya](ctx, scale * s);
     ctx.restore();
   };
 
+  // 頭光：細雙環
+  const halo = (cy, r) => dim(0.6, () => thin(() => { A(0, cy, r); A(0, cy, r * 1.12); }));
+
+  // 寂靜相：垂目慈眉，數筆而成
+  const sereneFace = (cy, byakugo = false) => thin(() => {
+    A(-3.0, cy - 0.4, 2.7, Math.PI * 1.22, Math.PI * 1.78); // 左眉
+    A(3.0, cy - 0.4, 2.7, Math.PI * 1.22, Math.PI * 1.78);  // 右眉
+    A(-2.9, cy + 4.2, 3.4, Math.PI * 1.32, Math.PI * 1.68); // 左垂目
+    A(2.9, cy + 4.2, 3.4, Math.PI * 1.32, Math.PI * 1.68);  // 右垂目
+    P([[0, cy + 1.0], [0, cy + 3.0]]);                       // 鼻樑
+    A(0, cy + 3.4, 1.6, Math.PI * 0.28, Math.PI * 0.72);     // 靜口
+    if (byakugo) dot(0, cy - 1.2, 0.55);                     // 白毫
+  });
+
+  // 忿怒相：立眉怒目，齒間見牙
+  const fierceFace = (cy) => thin(() => {
+    P([[-4.8, cy - 3.0], [-1.3, cy - 1.4]]); P([[4.8, cy - 3.0], [1.3, cy - 1.4]]); // 立眉
+    P([[-4.5, cy + 1.0], [-1.5, cy - 0.2]]); P([[4.5, cy + 1.0], [1.5, cy - 0.2]]); // 怒目
+    P([[0, cy + 0.6], [0, cy + 2.6]]);                                              // 鼻樑
+    A(0, cy + 6.9, 2.3, Math.PI * 1.3, Math.PI * 1.7);                              // 抿口
+    P([[2.1, cy + 5.0], [2.7, cy + 6.8]]); P([[-2.1, cy + 5.0], [-2.7, cy + 6.8]]); // 牙
+  });
+
+  // 長耳垂輪（如來福相）
+  const longEars = (cy, hr) => thin(() => {
+    for (const d of [-1, 1]) {
+      Q(d * hr * 0.96, cy - 0.6, d * (hr + 1.3), cy + 3.4, d * hr * 0.8, cy + 6.6);
+      A(d * hr * 0.84, cy + 6.4, 0.9);
+    }
+  });
+
+  // 結跏趺坐：寬穩之三角基
+  const lap = (topY, kneeW) => {
+    ctx.beginPath();
+    ctx.moveTo(-kneeW * s, (topY + 2) * s);
+    ctx.quadraticCurveTo(0, (topY - 3.5) * s, kneeW * s, (topY + 2) * s);
+    ctx.quadraticCurveTo(kneeW * 0.55 * s, (topY + 7) * s, 0, (topY + 7) * s);
+    ctx.quadraticCurveTo(-kneeW * 0.55 * s, (topY + 7) * s, -kneeW * s, (topY + 2) * s);
+    ctx.stroke();
+    thin(() => Q(6, topY + 0.6, 10, topY + 2.2, 13.5, topY + 0.8)); // 足踵之示
+  };
+
+  // 袈裟襞：膝上層疊之裾（自外而內三重嵌套）
+  const hemFolds = (topY, n = 3) => thin(() => {
+    const spans = [[20.5, topY + 2.6], [15, topY + 0.4], [9.5, topY - 1.8]];
+    for (let i = 0; i < n; i++) {
+      const [w, y] = spans[i];
+      Q(-w, y, 0, y + 3.2, w, y);
+    }
+  });
+
+  // 蓮臺二重：上仰瓣五、下仰瓣四，底承一線
+  const lotusThrone = (topY) => {
+    const petal = (px, tipY, baseY, hw) => {
+      ctx.beginPath();
+      ctx.moveTo((px - hw) * s, baseY * s);
+      ctx.quadraticCurveTo((px - hw * 0.45) * s, (tipY - 0.4) * s, px * s, tipY * s);
+      ctx.quadraticCurveTo((px + hw * 0.45) * s, (tipY - 0.4) * s, (px + hw) * s, baseY * s);
+      ctx.stroke();
+    };
+    thin(() => {
+      for (const dx of [-20, -10, 0, 10, 20]) petal(dx, topY, topY + 5.2, 5.4);
+      for (const dx of [-15, -5, 5, 15]) petal(dx, topY + 3.8, topY + 8.6, 5.4);
+    });
+    P([[-26, topY + 8.6], [26, topY + 8.6]]);
+  };
+
+  // 頸與肩臂之外輪廓（坐像共用）：肩闊 sw ≈ 二頭
+  const neckShoulders = (chinY, sw) => {
+    P([[-2.6, chinY + 0.2], [-2.8, chinY + 2.4]]);
+    P([[2.6, chinY + 0.2], [2.8, chinY + 2.4]]);
+    for (const d of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(d * 2.8 * s, (chinY + 2.4) * s);
+      ctx.bezierCurveTo(d * sw * 0.55 * s, (chinY + 2.0) * s, d * sw * 0.92 * s, (chinY + 3.4) * s, d * sw * s, (chinY + 6) * s); // 肩圓
+      ctx.quadraticCurveTo(d * (sw + 3.5) * s, (chinY + 14) * s, d * (sw + 3) * s, (chinY + 21) * s);                              // 上臂外緣
+      ctx.stroke();
+    }
+  };
+
+  // ── 立姿護世（天部）──────────────────────────────────────────────────────
   if (type === 'ten') {
-    // 立姿護世
-    halo(-30 * s, 12 * s);
-    head(-30 * s, 8 * s);
-    torso(-21 * s, 8 * s, 10);
-    ctx.beginPath(); // 甲冑胸甲
-    ctx.arc(0, -8 * s, 9 * s, Math.PI * 1.2, Math.PI * 1.8);
-    ctx.stroke();
-    ctx.beginPath(); // 雙足
-    ctx.moveTo(-6 * s, 8 * s); ctx.lineTo(-7 * s, 30 * s);
-    ctx.moveTo(6 * s, 8 * s); ctx.lineTo(7 * s, 30 * s);
-    ctx.moveTo(-12 * s, 31 * s); ctx.lineTo(12 * s, 31 * s);
-    ctx.stroke();
-    itemAt(17 * s, -10 * s, 11 * s);
+    const hc = -30, hr = 7;
+    halo(hc, 10.6);
+    A(0, hc, hr);                                          // 頭
+    A(0, hc - hr - 1.2, 2.2, Math.PI, 0);                  // 髻
+    sereneFace(hc - 0.6);
+    P([[-2.2, hc + hr - 0.6], [-2.4, hc + hr + 2]]);       // 頸
+    P([[2.2, hc + hr - 0.6], [2.4, hc + hr + 2]]);
+    for (const d of [-1, 1]) {                             // 肩→腰之輪廓
+      ctx.beginPath();
+      ctx.moveTo(d * 2.4 * s, -21 * s);
+      ctx.bezierCurveTo(d * 8 * s, -21.5 * s, d * 12 * s, -20.5 * s, d * 13 * s, -18.5 * s);
+      ctx.quadraticCurveTo(d * 13.5 * s, -10 * s, d * 10.5 * s, -3 * s);
+      ctx.stroke();
+    }
+    thin(() => {                                           // 肩甲
+      A(-12.4, -16.6, 3.1, Math.PI * 0.75, Math.PI * 1.85);
+      A(12.4, -16.6, 3.1, Math.PI * 1.15, Math.PI * 2.25);
+    });
+    thin(() => {                                           // 胸甲魚鱗三列
+      for (const [row, xs] of [[-15, [-4.4, 0, 4.4]], [-11.6, [-6.6, -2.2, 2.2, 6.6]], [-8.2, [-4.4, 0, 4.4]]]) {
+        for (const x of xs) A(x, row, 2.1, 0.12, Math.PI - 0.12);
+      }
+    });
+    P([[-10.5, -3], [10.5, -3]]);                          // 束帶
+    thin(() => P([[-9.8, -1.3], [9.8, -1.3]]));
+    for (const d of [-1, 1]) Q(d * 10.5, -2, d * 14, 4, d * 13, 10); // 甲裳外張
+    thin(() => {
+      Q(-13, 10, 0, 13.4, 13, 10);                         // 裳裾
+      P([[-4, -1], [-5, 10.6]]); P([[4, -1], [5, 10.6]]);  // 裳褶
+      B(-13, -17.5, -19, -13, -18.5, -7, -14, -4.2);       // 左袖翻飛
+    });
+    P([[-8, 11], [-8.4, 25]]); P([[-3.6, 11.6], [-4, 25]]); // 左足（直立承重）
+    Q(8, 11, 10.6, 17, 9.2, 25); Q(3.6, 11.6, 5.4, 17, 4.8, 25); // 右足（微屈）
+    thin(() => {                                           // 雙履
+      P([[-9.4, 25], [-10.4, 27.8], [-2.8, 27.8], [-3.2, 25]]);
+      P([[3.8, 25], [3, 27.8], [10.6, 27.8], [10, 25]]);
+    });
+    P([[-15, 28.6], [15, 28.6], [12, 32.6], [-12, 32.6]], true); // 磐石小座
+    thin(() => P([[-4.6, 28.6], [-6.4, 32.6]]));
+    Q(13, -18.5, 16, -12, 14.6, -4.6);                     // 右臂執器
+    thin(() => A(14, -2.4, 1.7));                          // 執手
+    itemAt(14, -10, 8);
     ctx.restore();
     return;
   }
 
-  const headY = -26 * s, hipY = 14 * s;
-
+  // ── 焰中忿怒（明王）──────────────────────────────────────────────────────
   if (type === 'myoo') {
-    // 焰中忿怒
-    ctx.save();
-    ctx.globalAlpha *= 0.7;
-    for (let i = 0; i < 7; i++) {
-      const a = -Math.PI / 2 + (i - 3) * 0.42;
-      const r = 34 * s;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r + (-4 * s));
-      ctx.quadraticCurveTo(
-        Math.cos(a) * r * 1.18 + 3 * s, Math.sin(a) * r * 1.18 - 4 * s,
-        Math.cos(a) * r * 1.3, Math.sin(a) * r * 1.3 - 4 * s,
-      );
-      ctx.stroke();
-    }
-    ctx.restore();
-    head(headY, 8 * s);
-    for (const dx of [-4, 0, 4]) { // 怒髮
-      ctx.beginPath();
-      ctx.moveTo(dx * s, headY - 7 * s);
-      ctx.lineTo(dx * s * 1.6, headY - 13 * s);
-      ctx.stroke();
-    }
-    torso(headY + 9 * s, hipY, 11);
-    seated(hipY);
-    ctx.beginPath(); // 磐石座
-    ctx.moveTo(-24 * s, hipY + 8 * s); ctx.lineTo(24 * s, hipY + 8 * s);
-    ctx.stroke();
-    itemAt(19 * s, -8 * s, 11 * s);
+    const hc = -26, hr = 8, chin = hc + hr;
+    dim(0.6, () => thin(() => {                            // 舉身光：偏側生姿之長焰
+      const px = (a, r) => Math.sin(a) * r, py = (a, r) => -4 - Math.cos(a) * r;
+      const flame = (ang, r0, r1, lean) => {
+        const m = r0 + (r1 - r0) * 0.5;
+        Q(px(ang, r0), py(ang, r0),
+          px(ang + lean * 2.2, m), py(ang + lean * 2.2, m),
+          px(ang + lean * 0.5, r1), py(ang + lean * 0.5, r1));
+      };
+      flame(-1.7, 24, 36, -0.3); flame(-1.18, 25, 41, 0.34);
+      flame(-0.62, 26, 44, -0.28); flame(-0.1, 26, 45, 0.36);
+      flame(0.38, 26, 44, 0.3); flame(0.95, 25, 42, -0.32); flame(1.62, 24, 37, 0.28);
+      // 內焰呼應，使火有層次
+      flame(-0.88, 24, 33, 0.3); flame(0.16, 25, 34, -0.28); flame(1.25, 24, 32, 0.3);
+    }));
+    halo(hc, 12.2);
+    thin(() => {                                           // 焰髮上揚
+      Q(-4.4, hc - 6.4, -7, hc - 9.4, -5.6, hc - 12.4);
+      Q(-1.5, hc - 7.8, -3.2, hc - 10.6, -1.7, hc - 13.6);
+      Q(1.5, hc - 7.8, 3.4, hc - 10.2, 2.3, hc - 13.4);
+      Q(4.4, hc - 6.4, 7.2, hc - 9, 6.2, hc - 12);
+    });
+    A(0, hc, hr);
+    fierceFace(hc - 0.4);
+    neckShoulders(chin, 17);
+    thin(() => Q(-9, -11.4, 0, -7.9, 9, -11.4));           // 胸臆之線
+    thin(() => Q(18.6, 3, 21, -4.6, 20, -11));             // 右前臂上舉
+    thin(() => A(20, -12.2, 2.0, Math.PI * 0.05, Math.PI * 0.95)); // 執掌
+    itemAt(20, -19, 6.6);
+    thin(() => {                                           // 左手羂索之纏
+      Q(-18.6, 3, -15.5, 5.4, -13.4, 6);
+      A(-13, 6.2, 2.0);
+      A(-13, 6.2, 3.8, Math.PI * 0.3, Math.PI * 1.9);
+      Q(-10.2, 8.8, -8.6, 11.6, -10.6, 14.4);
+    });
+    lap(12, 25);
+    hemFolds(12, 2);
+    P([[-27.5, 19], [27.5, 19], [23.5, 28], [-25.5, 28]], true); // 磐石：方稜之座
+    thin(() => { P([[-10, 19], [-13, 28]]); P([[9, 19], [11.6, 28]]); P([[19, 19], [16.8, 23.8]]); });
     ctx.restore();
     return;
   }
 
-  // 坐像諸型
-  halo(headY, 12 * s);
-  if (type === 'butsumo') { // 放光
-    ctx.save(); ctx.globalAlpha *= 0.5;
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(a) * 13 * s, headY + Math.sin(a) * 13 * s);
-      ctx.lineTo(Math.cos(a) * 17 * s, headY + Math.sin(a) * 17 * s);
-      ctx.stroke();
-    }
-    ctx.restore();
+  // ── 坐像三型：如來 · 菩薩 · 佛母 ─────────────────────────────────────────
+  const hc = -27, hr = 8, chin = hc + hr;
+  halo(hc, 12.8);
+  if (type === 'butsumo') {                                // 佛母放光：十六道短芒
+    dim(0.5, () => thin(() => {
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2 + Math.PI / 16;
+        P([[Math.cos(a) * 15.2, hc + Math.sin(a) * 15.2], [Math.cos(a) * 17.8, hc + Math.sin(a) * 17.8]]);
+      }
+    }));
   }
-  head(headY, 8 * s);
+  A(0, hc, hr);                                            // 頭
+  const soft = type === 'butsumo';
+  const sw = soft ? 15 : 16;                               // 肩半闊（佛母稍斂）
+
   if (type === 'nyorai') {
-    ctx.beginPath(); // 肉髻
-    ctx.arc(0, headY - 9 * s, 3.2 * s, Math.PI, 0);
-    ctx.stroke();
-    torso(headY + 9 * s, hipY, 10);
-    ctx.beginPath(); // 袈裟之襞
-    ctx.moveTo(-9 * s, headY + 12 * s);
-    ctx.quadraticCurveTo(2 * s, headY + 19 * s, 9 * s, hipY - 4 * s);
-    ctx.stroke();
-    if (chiken) { // 智拳印（金剛界大日）
-      ctx.beginPath();
-      ctx.arc(0, -6 * s, 4 * s, 0, 7);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0, -12.5 * s, 3.2 * s, 0, 7);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(0, -16 * s); ctx.lineTo(0, -19 * s);
-      ctx.stroke();
-    } else { // 法界定印
-      ctx.beginPath();
-      ctx.ellipse(0, 8 * s, 6 * s, 3 * s, 0, 0, 7);
-      ctx.stroke();
+    A(0, hc - hr + 1, 3.4, Math.PI * 1.04, Math.PI * 1.96); // 肉髻
+    thin(() => {                                            // 螺髮之示
+      A(-3.4, hc - 4.4, 1.5, Math.PI, 0);
+      A(0, hc - 5.2, 1.5, Math.PI, 0);
+      A(3.4, hc - 4.4, 1.5, Math.PI, 0);
+    });
+    sereneFace(hc, true);
+    longEars(hc, hr);
+    neckShoulders(chin, sw);
+    thin(() => {                                            // 通肩袈裟：開胸之領
+      Q(-11, -12.6, -4, -8.6, -1, -4.4);
+      Q(11, -12.6, 4, -8.6, 1, -4.4);
+      Q(13.4, -10.8, 5, -3.6, -2, 1.4);                     // 偏袒之褶
+    });
+    if (chiken) {                                           // 智拳印（金剛界大日）
+      thin(() => {
+        Q(-18.4, 2, -10, 0.6, -3.4, -0.6);                  // 左前臂
+        Q(18.4, 2, 12.4, -3, 3.2, -7.6);                    // 右前臂上抱
+      });
+      A(0, -1.6, 3.4);                                      // 左拳當胸
+      P([[0, -5], [0, -8]]);                                // 頭指直立
+      A(0, -10.8, 2.9);                                     // 右拳握指
+      thin(() => {
+        P([[-2.2, -2.2], [2.2, -2.2]]); P([[-2, -0.8], [2, -0.8]]); // 指節
+        P([[-1.8, -11.2], [1.8, -11.2]]);
+      });
+    } else {                                                // 法界定印
+      thin(() => {
+        Q(-18.4, 2, -13, 6.4, -6.4, 8.2);                   // 前臂入膝
+        Q(18.4, 2, 13, 6.4, 6.4, 8.2);
+        E(0, 8.8, 6.2, 2.3);                                // 下掌
+        E(0, 6.9, 4.6, 1.9);                                // 上掌
+        A(0, 5.4, 1.1, Math.PI * 0.9, Math.PI * 2.1);       // 拇指相拄
+      });
     }
-  } else { // bosatsu / butsumo
-    for (const dx of [-5, 0, 5]) { // 寶冠
-      ctx.beginPath();
-      ctx.moveTo(dx * s - 2 * s, headY - 7.5 * s);
-      ctx.lineTo(dx * s, headY - 11.5 * s);
-      ctx.lineTo(dx * s + 2 * s, headY - 7.5 * s);
-      ctx.stroke();
-    }
-    torso(headY + 9 * s, hipY, 10);
-    ctx.beginPath(); // 天衣
-    ctx.moveTo(-12 * s, headY + 11 * s);
-    ctx.quadraticCurveTo(-20 * s, 0, -14 * s, hipY);
-    ctx.moveTo(12 * s, headY + 11 * s);
-    ctx.quadraticCurveTo(20 * s, 0, 14 * s, hipY);
-    ctx.stroke();
-    ctx.beginPath(); // 瓔珞
-    ctx.arc(0, headY + 13 * s, 6 * s, Math.PI * 0.15, Math.PI * 0.85);
-    ctx.stroke();
-    itemAt(18 * s, -8 * s, 9 * s);
+  } else {                                                  // 菩薩 · 佛母
+    thin(() => {                                            // 三山寶冠
+      Q(-6.6, hc - 4.4, 0, hc - 6, 6.6, hc - 4.4);          // 冠帶
+      P([[-6.2, hc - 4.8], [-4.6, hc - 9], [-2.6, hc - 5.4]]);
+      P([[-1.9, hc - 5.6], [0, hc - 10.6], [1.9, hc - 5.6]]);
+      P([[2.6, hc - 5.4], [4.6, hc - 9], [6.2, hc - 4.8]]);
+      A(0, hc - 7.2, 1.2);                                  // 中央寶珠
+      A(-8.8, hc - 1.6, 1.7); A(8.8, hc - 1.6, 1.7);        // 雙髻垂鬟
+    });
+    sereneFace(hc + 0.4, soft);
+    neckShoulders(chin, sw);
+    thin(() => {                                            // 瓔珞：頸瓔與垂珠
+      A(0, -16.2, 5.2, Math.PI * 0.12, Math.PI * 0.88);
+      A(0, -15.4, 9.2, Math.PI * 0.28, Math.PI * 0.72);
+      A(-5.4, -7.6, 0.8); A(0, -5.6, 0.8); A(5.4, -7.6, 0.8);
+    });
+    dim(0.8, () => thin(() => {                             // 天衣：左右各一 S 曲
+      B(-sw + 1.6, -12, -sw - 9, -5, -sw - 1, 3, -sw - 8, 12);
+      B(sw - 1.6, -12, sw + 9, -5, sw + 1, 3, sw + 8, 12);
+    }));
+    thin(() => {                                            // 臂釧之示
+      P([[-sw - 2.6, -2.2], [-sw + 0.4, -2.8]]); P([[sw + 2.6, -2.2], [sw - 0.4, -2.8]]);
+    });
+    thin(() => {                                            // 左手安膝
+      Q(-sw - 2.4, 5, -12, 7, -5.2, 8.6);
+      A(-4.6, 8.2, 2.2, Math.PI * 1.05, Math.PI * 2.2);
+    });
+    thin(() => Q(sw + 3, 5, sw + 4.4, -4, sw + 3.2, -11));  // 右前臂上舉
+    thin(() => A(sw + 3.4, -12.2, 2.0, Math.PI * 0.05, Math.PI * 0.95)); // 仰掌
+    itemAt(sw + 3.4, -18.4, 5.6);                           // 三昧耶具於肩側
   }
-  seated(hipY);
-  lotusSeat(hipY + 3 * s);
+
+  lap(12, soft ? 24 : 25);
+  hemFolds(12, type === 'nyorai' ? 3 : 2);
+  lotusThrone(20.6);
   ctx.restore();
 }
 
@@ -495,16 +631,18 @@ function drawSeed(ctx, sid, bija, baseSize, maxWidth, x, y) {
 
 // ── 月輪尊形 ────────────────────────────────────────────────────────────────
 // form: bija | samaya | subtle | offer | wrath | wrath-samaya
+//     | figure | figure-subtle | figure-offer | figure-wrath
 // sid: 悉曇種字（真形）；bija 羅馬轉寫降為輔注
 // form 'figure' 為大曼荼羅之尊形；chiken: 智拳印（金剛界大日）
-export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', chiken = false }) {
-  const key = `${form}|${id}|${zh}|${bija}|${sid}|${chiken}`;
+// res: 畫布之幅（預設 256；中尊可付 384 以求精細）
+export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', chiken = false, res = 256 }) {
+  const key = `${form}|${id}|${zh}|${bija}|${sid}|${chiken}|${res}`;
   if (cache.has(key)) return cache.get(key);
 
-  const S = 256, c = canvas(S), ctx = c.getContext('2d');
+  const S = res, k = res / 256, c = canvas(S), ctx = c.getContext('2d');
   const cx = S / 2, cy = S / 2;
   const colHex = hex(color);
-  const wrath = form.startsWith('wrath');
+  const wrath = form.startsWith('wrath') || form === 'figure-wrath';
 
   // 外暈（部色光）
   let g = ctx.createRadialGradient(cx, cy, S * 0.18, cx, cy, S * 0.5);
@@ -522,7 +660,7 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     ctx.save();
     ctx.translate(cx, cy);
     ctx.strokeStyle = '#d4602f';
-    ctx.lineWidth = 2.4;
+    ctx.lineWidth = 2.4 * k;
     ctx.globalAlpha = 0.95;
     const n = 14;
     for (let i = 0; i < n; i++) {
@@ -554,10 +692,10 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
   ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fill();
 
   // 双环（外金、内部色）
-  ctx.lineWidth = 2.6;
+  ctx.lineWidth = 2.6 * k;
   ctx.strokeStyle = wrath ? '#cf6a36' : GOLD;
   ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.stroke();
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1.2 * k;
   ctx.strokeStyle = colHex;
   ctx.globalAlpha = 0.9;
   ctx.beginPath(); ctx.arc(0, 0, R * 0.9, 0, 7); ctx.stroke();
@@ -566,7 +704,7 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
   // 內容
   ctx.strokeStyle = colHex;
   ctx.fillStyle = colHex;
-  ctx.lineWidth = 3.2;
+  ctx.lineWidth = 3.2 * k;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
@@ -574,42 +712,63 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     const fn = ICONS[samaya] || ICONS.vajra1;
     ctx.save();
     ctx.shadowColor = colHex;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 10 * k;
     fn(ctx, size);
     ctx.restore();
   };
 
-  if (form === 'figure') {
-    // 大曼荼羅：尊形之略相
+  if (form === 'figure' || form.startsWith('figure-')) {
+    // 大曼荼羅：尊形之略相（複合會相由此衍生）
+    if (form === 'figure-subtle') {
+      // 微細會：尊住一鈷杵中——杵以金線明示，毋使隱沒
+      ctx.save();
+      ctx.globalAlpha = 0.78;
+      ctx.lineWidth = 2.2 * k;
+      ctx.strokeStyle = GOLD;
+      ICONS.vajra1(ctx, R * 0.98);
+      ctx.restore();
+    }
     ctx.save();
     ctx.shadowColor = colHex;
-    ctx.shadowBlur = 7;
+    ctx.shadowBlur = 7 * k;
+    if (form === 'figure-subtle') ctx.scale(0.62, 0.62);
+    else if (form === 'figure-offer') { ctx.translate(0, -R * 0.07); ctx.scale(0.86, 0.86); }
     drawFigure(ctx, R, deityType(zh), samaya, { chiken });
     ctx.restore();
+    if (form === 'figure-offer') {
+      // 供養會：下捧蓮臺
+      ctx.save();
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 1.6 * k;
+      ctx.translate(0, R * 0.62);
+      ctx.scale(0.5, 0.4);
+      ICONS.lotus(ctx, R * 0.6);
+      ctx.restore();
+    }
   } else if (form === 'samaya' || form === 'wrath-samaya') {
     drawIcon(R * 0.62);
   } else if (form === 'subtle') {
     // 微細：種字縮於金剛杵輪廓之中
     ctx.save();
     ctx.globalAlpha = 0.5;
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 1.8 * k;
     ICONS.vajra1(ctx, R * 0.95);
     ctx.restore();
     ctx.shadowColor = colHex;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 8 * k;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     drawSeed(ctx, sid, bija, R * 0.52, R * 1.05, 0, R * 0.02);
   } else {
     // 種字：悉曇為正，羅馬轉寫為注
     ctx.shadowColor = colHex;
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 14 * k;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     drawSeed(ctx, sid, bija, R * 0.74, R * 1.3, 0, -R * 0.12);
     if (form !== 'offer' && sid) {
       // 羅馬轉寫輔注（供養形之蓮座居此位，故免注）
-      ctx.shadowBlur = 6;
+      ctx.shadowBlur = 6 * k;
       ctx.globalAlpha = 0.78;
       ctx.font = `italic 600 ${R * 0.26}px "Cormorant Garamond", serif`;
       ctx.fillText(bija, 0, R * 0.58);
@@ -618,7 +777,7 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     if (form === 'offer') {
       // 供養：捧蓮之手（下方小蓮座）
       ctx.shadowBlur = 0;
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 1.6 * k;
       ctx.save();
       ctx.translate(0, R * 0.58);
       ctx.scale(0.5, 0.4);

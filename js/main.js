@@ -47,6 +47,8 @@ const CIRCLE_ZH = {
 const FORM_ZH = {
   bija: '種字', samaya: '三昧耶形', subtle: '微細',
   offer: '供養', wrath: '忿怒', 'wrath-samaya': '忿怒三昧耶',
+  figure: '尊形', 'figure-subtle': '尊住杵中',
+  'figure-offer': '尊捧供養', 'figure-wrath': '忿怒尊形',
 };
 const courtByKey = Object.fromEntries(COURTS.map(c => [c.key, c]));
 const PI = Math.PI;
@@ -117,10 +119,12 @@ async function boot() {
   // 真身之相：隨 state.form 取紋理（緩生，cache 內恆存）
   function nodeTex(d, side) {
     const a = side === 't' ? d.t : d.k;
+    const lord = d.id === 'center' || d.k?.slot === 'lord' || d.t?.court === 'chudai';
     return deityTexture({
       id: `${d.id}|${side}`, zh: a.zh, bija: a.bija, sid: siddham(a.bija),
       samaya: d.samaya, color: FAMILY_COLOR[d.family], form: state.form,
       chiken: state.form === 'figure' && d.id === 'center' && side === 'k',
+      res: lord ? 384 : 256, // 中尊大相，幅加倍半以求精細
     });
   }
 
@@ -165,6 +169,8 @@ async function boot() {
       const tex = deityTexture({
         id: `${assembly.key}|${d.id}`, zh, bija, sid: siddham(bija),
         samaya: d.samaya, color: FAMILY_COLOR[d.family], form: assembly.form,
+        // 一印會：唯一大日，智拳之印
+        chiken: assembly.key === 'ichiin' && d.id === 'center',
       });
       const mat = new THREE.MeshBasicMaterial({
         map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0,

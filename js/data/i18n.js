@@ -15,6 +15,7 @@ const UI_ZH = {
   enter: '入壇', exit: '出壇', toss: '投花',
   kan: '觀法', kanExit: '出觀',
   soundOff: '默', soundOn: '音', reset: '復觀',
+  fold: '具', unfold: '收',
   sliderT: '胎藏', sliderK: '金剛', sliderMid: '不二',
   hintAerial: '拖曳旋觀 · 滾輪遠近 · 點尊得詳',
   hintFP: '拖曳環顧 · WASD 行於壇中 · Esc 出壇',
@@ -49,6 +50,7 @@ const UI_ZH = {
     kan: '五相成身觀：坐於壇心，觀心月輪。輕觸以進',
     sound: '磬音：點尊一磬，五部各韻',
     reset: '復觀：還於俯瞰',
+    fold: '法具欄：收展諸鈕',
   },
 };
 
@@ -57,6 +59,7 @@ const UI_EN = {
   enter: 'Enter', exit: 'Leave', toss: 'Cast',
   kan: 'Observe', kanExit: 'End',
   soundOff: 'Silent', soundOn: 'Sound', reset: 'Reset',
+  fold: 'Tools', unfold: 'Fold',
   sliderT: 'Womb', sliderK: 'Diamond', sliderMid: 'ADVAYA',
   hintAerial: 'Drag to orbit · Scroll to zoom · Tap a deity',
   hintFP: 'Drag to look · WASD to walk · Esc to leave',
@@ -91,6 +94,7 @@ const UI_EN = {
     kan: 'Five-Stage Attainment: sit at the center and contemplate the heart-moon. Tap to proceed',
     sound: 'Bowl sound: each family has its tone; tap a deity to strike',
     reset: 'Reset to the aerial view',
+    fold: 'Tool drawer: fold/unfold the controls',
   },
 };
 
@@ -142,6 +146,8 @@ export const FAMILY_EN = {
 export const FORMVAR_EN = {
   bija: 'seed-syllable', samaya: 'samaya', subtle: 'subtle',
   offer: 'offering', wrath: 'wrathful', 'wrath-samaya': 'wrathful samaya',
+  figure: 'embodied', 'figure-subtle': 'figure within the vajra',
+  'figure-offer': 'figure bearing offering', 'figure-wrath': 'wrathful figure',
 };
 
 // ── 四曼之相 ────────────────────────────────────────────────────────────────

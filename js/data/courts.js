@@ -54,8 +54,11 @@ export const TAIZO_ASCENT = [
 
 // ══ 金剛界 · 九會 ════════════════════════════════════════════════════════════
 // grid: [列,行]，行0=上。下轉門自中央成身會起，順旋而出；上轉門逆之。
-// form: 該會對三十七尊所施之「表示變換」——同一圖，異函子。
-//   bija=種字 · samaya=三昧耶形 · subtle=微細(金剛杵中) · offer=供養 · wrath=忿怒
+// form: 該會之「定形」——九會各有固定表示形態，是其身份之一部，不隨轉相鈕變。
+//   依現圖：唯三昧耶會・降三世三昧耶會現標幟，餘會皆現尊形——
+//   微細會尊住杵中（figure-subtle）、供養會尊捧蓮臺（figure-offer）、
+//   降三世會忿怒尊形（figure-wrath）、一印會智拳印大日。
+//   成身會由真身（形變節點）充任，其相隨「轉相」鈕——使用者所參之四曼。
 export const ASSEMBLIES = [
   { key: 'jojin',    zh: '成身會',   grid: [1, 1], form: 'bija',   scale: 1.0,
     descent: '法然具足：三十七尊，五智圓明，本有之佛身。',
@@ -63,26 +66,28 @@ export const ASSEMBLIES = [
   { key: 'sammaya',  zh: '三昧耶會', grid: [1, 2], form: 'samaya', scale: 0.92,
     descent: '攝身為誓：尊形隱去，唯餘器仗標幟——佛以誓約住世。',
     ascent: '持印起誓：未見佛身，先持其誓。' },
-  { key: 'misai',    zh: '微細會',   grid: [0, 2], form: 'subtle', scale: 0.85,
+  { key: 'misai',    zh: '微細會',   grid: [0, 2], form: 'figure-subtle', scale: 0.85,
     descent: '入金剛微細：縮於杵中，遍住萬法之內，無物不含佛。',
     ascent: '於微細處見佛：一塵一杵，皆藏全體。' },
-  { key: 'kuyo',     zh: '供養會',   grid: [0, 1], form: 'offer',  scale: 0.92,
+  { key: 'kuyo',     zh: '供養會',   grid: [0, 1], form: 'figure-offer', scale: 0.92,
     descent: '互為供養：諸尊各捧香華燈塗，悲智交徹而相養。',
     ascent: '以供養入道：奉一華一燈，即與聖眾交徹。' },
-  { key: 'shiin',    zh: '四印會',   grid: [0, 0], form: 'bija',   scale: 1.0,
+  { key: 'shiin',    zh: '四印會',   grid: [0, 0], form: 'figure', scale: 1.0,
     subset: ['center', 'fugen', 'kokuzo', 'kannon', 'k-gyo',
              'p-kon', 'p-ho', 'p-hou', 'p-katsu'],
     descent: '攝繁為簡：三十七尊收於四印，將歸於一。',
     ascent: '四印初分：一將開為萬，行者始見差別之德。' },
-  { key: 'ichiin',   zh: '一印會',   grid: [1, 0], form: 'bija',   scale: 1.55,
+  { key: 'ichiin',   zh: '一印會',   grid: [1, 0], form: 'figure', scale: 1.55,
     subset: ['center'],
     descent: '千尊歸一：唯一大日，智拳之印。多即是一。',
     ascent: '一中見多之始：於唯一處，預感無量。' },
-  { key: 'rishu',    zh: '理趣會',   grid: [2, 0], form: 'bija',   scale: 0.95,
+  { key: 'rishu',    zh: '理趣會',   grid: [2, 0], form: 'figure', scale: 0.95,
     cast: 'rishu',
     descent: '煩惱即菩提：欲觸愛慢，皆是金剛薩埵之印。入世最深處。',
     ascent: '即事而真：不避欲塵，於染中起修——上轉之初門。' },
-  { key: 'gozanze',  zh: '降三世會', grid: [2, 1], form: 'wrath',  scale: 0.92,
+  // 按：降三世會諸尊依現圖大體仍現自相，唯金剛薩埵換現降三世明王（echo 置換），
+  // 忿怒會相以焰環赤輪表之——非諸尊皆轉明王形，此其經軌。
+  { key: 'gozanze',  zh: '降三世會', grid: [2, 1], form: 'figure-wrath', scale: 0.92,
     descent: '現忿怒身：慈悲之極反為雷霆，摧三界之剛強。',
     ascent: '降伏自心：先摧己之貪瞋癡，足下所踏即我慢。' },
   { key: 'gozanze-s', zh: '降三世三昧耶會', grid: [2, 2], form: 'wrath-samaya', scale: 0.85,

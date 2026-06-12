@@ -126,6 +126,8 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   display: flex;
   flex-direction: column;
   gap: 14px;
+  max-height: calc(100vh - 24px);
+  transition: gap .45s ease;
 }
 #controls button {
   writing-mode: vertical-rl;
@@ -151,6 +153,62 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   background: var(--gold);
   border-color: var(--gold);
   text-shadow: none;
+}
+
+/* 法具欄之收展：#btn-fold 為樞，餘鈕可摺 */
+#btn-fold {
+  font-size: 13px;
+  padding: 10px 7px;
+  opacity: .72;
+}
+#btn-fold:hover { opacity: 1; }
+#controls button:not(#btn-fold) {
+  max-height: 220px;
+  transition: max-height .45s ease, opacity .45s ease, transform .45s ease,
+              padding .45s ease, border-color .45s ease,
+              color .35s, background .35s, box-shadow .35s;
+}
+#controls.folded { gap: 0; }
+#controls.folded button:not(#btn-fold) {
+  max-height: 0;
+  opacity: 0;
+  transform: translateX(14px);
+  padding-top: 0;
+  padding-bottom: 0;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+#controls.folded #btn-fold { opacity: 1; }
+/* 收摺之際，諸鈕魚貫而隱 */
+#controls.folded button:nth-child(3) { transition-delay: .02s; }
+#controls.folded button:nth-child(4) { transition-delay: .04s; }
+#controls.folded button:nth-child(5) { transition-delay: .06s; }
+#controls.folded button:nth-child(6) { transition-delay: .08s; }
+#controls.folded button:nth-child(7) { transition-delay: .1s; }
+#controls.folded button:nth-child(8) { transition-delay: .12s; }
+#controls.folded button:nth-child(9) { transition-delay: .14s; }
+#controls.folded button:nth-child(10) { transition-delay: .16s; }
+
+/* 短屏之制：鈕形漸縮，俾十鈕不溢 */
+@media (max-height: 860px) {
+  #controls { gap: 9px; }
+  #controls button {
+    font-size: 14px;
+    letter-spacing: .22em;
+    padding: 11px 7px;
+  }
+  #btn-fold { font-size: 12px; padding: 8px 6px; }
+}
+@media (max-height: 700px) {
+  #controls { gap: 6px; }
+  #controls button {
+    font-size: 12px;
+    letter-spacing: .16em;
+    padding: 7px 6px;
+  }
+  #btn-fold { font-size: 11px; padding: 6px 5px; }
 }
 
 /* 不二滑尺 */
