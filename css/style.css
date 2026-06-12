@@ -15,6 +15,13 @@
   --latin: "Cormorant Garamond", Georgia, serif;
 }
 
+/* 悉曇真形（vendor 自帶，離線可用） */
+@font-face {
+  font-family: "Noto Sans Siddham";
+  src: url("../vendor/fonts/NotoSansSiddham-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
@@ -285,12 +292,18 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   cursor: pointer;
 }
 #info-bija {
-  font-family: var(--latin);
-  font-size: 46px;
-  font-weight: 600;
-  font-style: italic;
-  line-height: 1.1;
+  font-family: "Noto Sans Siddham", var(--latin);
+  font-size: 52px;
+  line-height: 1.15;
   text-shadow: 0 0 24px currentColor;
+}
+#info-bija-roman {
+  font-family: var(--latin);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 600;
+  opacity: .75;
+  margin-top: 2px;
 }
 #info-name {
   margin-top: 8px;

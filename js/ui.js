@@ -73,9 +73,11 @@ export function initUI(h) {
         : '拖曳旋觀 · 滾輪遠近 · 點尊得詳';
     },
 
-    showInfo({ bija, name, sk, family, familyColor, loc, desc, mantra }) {
+    showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra }) {
       $('info-bija').textContent = bija;
       $('info-bija').style.color = familyColor;
+      $('info-bija-roman').textContent = bijaRoman && bijaRoman !== bija ? bijaRoman : '';
+      $('info-bija-roman').style.color = familyColor;
       $('info-name').textContent = name;
       $('info-sk').textContent = sk || '';
       const fam = $('info-family');

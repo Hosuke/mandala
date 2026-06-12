@@ -305,10 +305,28 @@ const ICONS = {
 ICONS['lotus-blue'] = ICONS.lotus;
 ICONS['stupa-small'] = ICONS.stupa;
 
+// 種字繪製：悉曇按幅自適，無悉曇則退羅馬轉寫
+function drawSeed(ctx, sid, bija, baseSize, maxWidth, x, y) {
+  if (sid) {
+    let fs = baseSize * 1.18;
+    ctx.font = `400 ${fs}px "Noto Sans Siddham"`;
+    const w = ctx.measureText(sid).width;
+    if (w > maxWidth) {
+      fs *= maxWidth / w;
+      ctx.font = `400 ${fs}px "Noto Sans Siddham"`;
+    }
+    ctx.fillText(sid, x, y);
+  } else {
+    ctx.font = `600 ${baseSize}px "Cormorant Garamond", serif`;
+    ctx.fillText(bija, x, y);
+  }
+}
+
 // ── 月輪尊形 ────────────────────────────────────────────────────────────────
 // form: bija | samaya | subtle | offer | wrath | wrath-samaya
-export function deityTexture({ id, zh, bija, samaya, color, form = 'bija' }) {
-  const key = `${form}|${id}|${zh}|${bija}`;
+// sid: 悉曇種字（真形）；bija 羅馬轉寫降為輔注
+export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija' }) {
+  const key = `${form}|${id}|${zh}|${bija}|${sid}`;
   if (cache.has(key)) return cache.get(key);
 
   const S = 256, c = canvas(S), ctx = c.getContext('2d');
@@ -400,19 +418,24 @@ export function deityTexture({ id, zh, bija, samaya, color, form = 'bija' }) {
     ctx.restore();
     ctx.shadowColor = colHex;
     ctx.shadowBlur = 8;
-    ctx.font = `600 ${R * 0.55}px "Cormorant Garamond", serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(bija, 0, R * 0.02);
+    drawSeed(ctx, sid, bija, R * 0.52, R * 1.05, 0, R * 0.02);
   } else {
-    // 種字
+    // 種字：悉曇為正，羅馬轉寫為注
     ctx.shadowColor = colHex;
     ctx.shadowBlur = 14;
-    const fs = bija.length > 3 ? R * 0.62 : R * 0.8;
-    ctx.font = `600 ${fs}px "Cormorant Garamond", serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(bija, 0, -R * 0.04);
+    drawSeed(ctx, sid, bija, R * 0.74, R * 1.3, 0, -R * 0.12);
+    if (form !== 'offer' && sid) {
+      // 羅馬轉寫輔注（供養形之蓮座居此位，故免注）
+      ctx.shadowBlur = 6;
+      ctx.globalAlpha = 0.78;
+      ctx.font = `italic 600 ${R * 0.26}px "Cormorant Garamond", serif`;
+      ctx.fillText(bija, 0, R * 0.58);
+      ctx.globalAlpha = 1;
+    }
     if (form === 'offer') {
       // 供養：捧蓮之手（下方小蓮座）
       ctx.shadowBlur = 0;

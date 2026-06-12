@@ -5,6 +5,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import * as THREE from '../vendor/three.module.js';
 import { DEITIES, byId } from './data/deities.js';
+import { siddham as siddhamRaw } from './data/siddham.js';
+
+// 悉曇字體未及載入時，種字退羅馬轉寫（canvas 紋理不會隨字體後到而重繪）
+let sidFontReady = false;
+const siddham = b => (sidFontReady ? siddhamRaw(b) : '');
 import {
   COURTS, RING_RADIUS, PETAL_RADIUS, FAMILY_COLOR, FAMILY_ZH, ASSEMBLIES,
 } from './data/courts.js';
@@ -72,8 +77,8 @@ async function boot() {
     if (d.rishuOnly) continue;
     const { posT, posK, hasT, hasK } = morphTargets(d);
     const color = FAMILY_COLOR[d.family];
-    const texT = hasT ? deityTexture({ id: d.id + '|t', zh: d.t.zh, bija: d.t.bija, samaya: d.samaya, color, form: 'bija' }) : null;
-    const texK = hasK ? deityTexture({ id: d.id + '|k', zh: d.k.zh, bija: d.k.bija, samaya: d.samaya, color, form: 'bija' }) : null;
+    const texT = hasT ? deityTexture({ id: d.id + '|t', zh: d.t.zh, bija: d.t.bija, sid: siddham(d.t.bija), samaya: d.samaya, color, form: 'bija' }) : null;
+    const texK = hasK ? deityTexture({ id: d.id + '|k', zh: d.k.zh, bija: d.k.bija, sid: siddham(d.k.bija), samaya: d.samaya, color, form: 'bija' }) : null;
     const mat = new THREE.MeshBasicMaterial({
       map: texT || texK, transparent: true, depthWrite: false, side: THREE.DoubleSide,
     });
@@ -103,7 +108,7 @@ async function boot() {
       const zh = display?.zh ?? d.k.zh;
       const bija = display?.bija ?? d.k.bija;
       const tex = deityTexture({
-        id: `${assembly.key}|${d.id}`, zh, bija,
+        id: `${assembly.key}|${d.id}`, zh, bija, sid: siddham(bija),
         samaya: d.samaya, color: FAMILY_COLOR[d.family], form: assembly.form,
       });
       const mat = new THREE.MeshBasicMaterial({
@@ -288,7 +293,8 @@ async function boot() {
       }
     }
     ui.showInfo({
-      bija: aspect.bija, name: aspect.zh, sk: aspect.sk,
+      bija: siddham(aspect.bija) || aspect.bija, bijaRoman: aspect.bija,
+      name: aspect.zh, sk: aspect.sk,
       family: FAMILY_ZH[d.family], familyColor: color,
       loc, desc: d.desc, mantra: d.mantra,
     });
@@ -608,15 +614,19 @@ async function loadFonts() {
   const sample = DEITIES.map(d => (d.t?.zh ?? '') + (d.k?.zh ?? '')).join('') +
     COURTS.map(c => c.zh).join('') + ASSEMBLIES.map(a => a.zh).join('') +
     '金胎不二兩部曼荼羅大悲藏界上下轉門入出壇復觀止種字三昧耶微細供養忿怒月輪攝門同體即';
+  const sidSample = [...new Set(DEITIES.flatMap(d => [d.t?.bija, d.k?.bija].filter(Boolean)))]
+    .map(b => siddhamRaw(b)).join('');
   const wants = [
     document.fonts.load('500 40px "LXGW WenKai TC"', sample),
     document.fonts.load('600 90px "Cormorant Garamond"', 'vaṃ hūṃ trāḥ hrīḥ aḥ āṃ ṛ'),
     document.fonts.load('italic 600 46px "Cormorant Garamond"', 'vaṃ'),
+    document.fonts.load('400 90px "Noto Sans Siddham"', sidSample),
   ];
   await Promise.race([
     Promise.all(wants).catch(() => {}),
     new Promise(r => setTimeout(r, 4500)),
   ]);
+  sidFontReady = document.fonts.check('400 90px "Noto Sans Siddham"', '\u{11580}');
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
