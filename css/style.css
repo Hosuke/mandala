@@ -256,6 +256,8 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   margin-bottom: 8px;
 }
 #caption-text {
+  /* 悉曇殿後：唯漢字拉丁所缺之碼位（真言悉曇行）落於其上 */
+  font-family: "LXGW WenKai TC", "Songti TC", "Noto Sans Siddham", serif;
   font-size: 14.5px;
   line-height: 1.9;
   color: var(--ink-soft);
@@ -344,10 +346,18 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   line-height: 1.95;
   color: var(--ink-soft);
 }
-#info-mantra {
+#info-mantra-sid {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px dashed var(--gold-faint);
+  font-family: "Noto Sans Siddham", serif;
+  font-size: 19px;
+  color: var(--gold);
+  line-height: 1.55;
+  text-shadow: 0 0 14px rgba(216, 179, 106, .4);
+}
+#info-mantra {
+  margin-top: 6px;
   font-family: var(--latin);
   font-size: 13px;
   font-style: italic;

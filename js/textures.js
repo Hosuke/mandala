@@ -305,6 +305,177 @@ const ICONS = {
 ICONS['lotus-blue'] = ICONS.lotus;
 ICONS['stupa-small'] = ICONS.stupa;
 
+// ── 大曼荼羅之相：五種儀軌型之略相（程序線描，非寫實）─────────────────────
+// type: nyorai 如來 · bosatsu 菩薩 · myoo 明王 · ten 天 · butsumo 佛母
+export function deityType(zh) {
+  if (zh.includes('明王') || zh.includes('軍荼利')) return 'myoo';
+  if (zh.includes('佛母')) return 'butsumo';
+  if (zh.includes('如來') || zh.endsWith('佛')) return 'nyorai';
+  if (zh.endsWith('天')) return 'ten';
+  return 'bosatsu';
+}
+
+function drawFigure(ctx, R, type, samaya, { chiken = false } = {}) {
+  const s = R * 0.013; // 基準尺
+  ctx.save();
+  ctx.lineWidth = 2.4;
+
+  const head = (cy, r) => { ctx.beginPath(); ctx.arc(0, cy, r, 0, 7); ctx.stroke(); };
+  const halo = (cy, r) => {
+    ctx.save(); ctx.globalAlpha *= 0.55;
+    ctx.beginPath(); ctx.arc(0, cy, r, 0, 7); ctx.stroke();
+    ctx.restore();
+  };
+  const lotusSeat = (cy) => {
+    for (const dx of [-16, 0, 16]) {
+      ctx.beginPath();
+      ctx.arc(dx * s, cy + 6 * s, 9 * s, Math.PI * 1.15, Math.PI * 1.85);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(-26 * s, cy + 7 * s); ctx.lineTo(26 * s, cy + 7 * s);
+    ctx.stroke();
+  };
+  const seated = (cy) => { // 結跏趺坐之略
+    ctx.beginPath();
+    ctx.moveTo(-22 * s, cy);
+    ctx.quadraticCurveTo(0, cy + 9 * s, 22 * s, cy);
+    ctx.quadraticCurveTo(0, cy - 4 * s, -22 * s, cy);
+    ctx.stroke();
+  };
+  const torso = (nY, hipY, w) => {
+    ctx.beginPath();
+    ctx.moveTo(-w * s, nY);
+    ctx.quadraticCurveTo(-w * 1.25 * s, (nY + hipY) / 2, -w * 0.8 * s, hipY);
+    ctx.moveTo(w * s, nY);
+    ctx.quadraticCurveTo(w * 1.25 * s, (nY + hipY) / 2, w * 0.8 * s, hipY);
+    ctx.stroke();
+  };
+  const itemAt = (x, y, scale) => {
+    if (!samaya || !ICONS[samaya]) return;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.lineWidth = 1.7;
+    ICONS[samaya](ctx, scale);
+    ctx.restore();
+  };
+
+  if (type === 'ten') {
+    // 立姿護世
+    halo(-30 * s, 12 * s);
+    head(-30 * s, 8 * s);
+    torso(-21 * s, 8 * s, 10);
+    ctx.beginPath(); // 甲冑胸甲
+    ctx.arc(0, -8 * s, 9 * s, Math.PI * 1.2, Math.PI * 1.8);
+    ctx.stroke();
+    ctx.beginPath(); // 雙足
+    ctx.moveTo(-6 * s, 8 * s); ctx.lineTo(-7 * s, 30 * s);
+    ctx.moveTo(6 * s, 8 * s); ctx.lineTo(7 * s, 30 * s);
+    ctx.moveTo(-12 * s, 31 * s); ctx.lineTo(12 * s, 31 * s);
+    ctx.stroke();
+    itemAt(17 * s, -10 * s, 11 * s);
+    ctx.restore();
+    return;
+  }
+
+  const headY = -26 * s, hipY = 14 * s;
+
+  if (type === 'myoo') {
+    // 焰中忿怒
+    ctx.save();
+    ctx.globalAlpha *= 0.7;
+    for (let i = 0; i < 7; i++) {
+      const a = -Math.PI / 2 + (i - 3) * 0.42;
+      const r = 34 * s;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r + (-4 * s));
+      ctx.quadraticCurveTo(
+        Math.cos(a) * r * 1.18 + 3 * s, Math.sin(a) * r * 1.18 - 4 * s,
+        Math.cos(a) * r * 1.3, Math.sin(a) * r * 1.3 - 4 * s,
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
+    head(headY, 8 * s);
+    for (const dx of [-4, 0, 4]) { // 怒髮
+      ctx.beginPath();
+      ctx.moveTo(dx * s, headY - 7 * s);
+      ctx.lineTo(dx * s * 1.6, headY - 13 * s);
+      ctx.stroke();
+    }
+    torso(headY + 9 * s, hipY, 11);
+    seated(hipY);
+    ctx.beginPath(); // 磐石座
+    ctx.moveTo(-24 * s, hipY + 8 * s); ctx.lineTo(24 * s, hipY + 8 * s);
+    ctx.stroke();
+    itemAt(19 * s, -8 * s, 11 * s);
+    ctx.restore();
+    return;
+  }
+
+  // 坐像諸型
+  halo(headY, 12 * s);
+  if (type === 'butsumo') { // 放光
+    ctx.save(); ctx.globalAlpha *= 0.5;
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 13 * s, headY + Math.sin(a) * 13 * s);
+      ctx.lineTo(Math.cos(a) * 17 * s, headY + Math.sin(a) * 17 * s);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  head(headY, 8 * s);
+  if (type === 'nyorai') {
+    ctx.beginPath(); // 肉髻
+    ctx.arc(0, headY - 9 * s, 3.2 * s, Math.PI, 0);
+    ctx.stroke();
+    torso(headY + 9 * s, hipY, 10);
+    ctx.beginPath(); // 袈裟之襞
+    ctx.moveTo(-9 * s, headY + 12 * s);
+    ctx.quadraticCurveTo(2 * s, headY + 19 * s, 9 * s, hipY - 4 * s);
+    ctx.stroke();
+    if (chiken) { // 智拳印（金剛界大日）
+      ctx.beginPath();
+      ctx.arc(0, -6 * s, 4 * s, 0, 7);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, -12.5 * s, 3.2 * s, 0, 7);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, -16 * s); ctx.lineTo(0, -19 * s);
+      ctx.stroke();
+    } else { // 法界定印
+      ctx.beginPath();
+      ctx.ellipse(0, 8 * s, 6 * s, 3 * s, 0, 0, 7);
+      ctx.stroke();
+    }
+  } else { // bosatsu / butsumo
+    for (const dx of [-5, 0, 5]) { // 寶冠
+      ctx.beginPath();
+      ctx.moveTo(dx * s - 2 * s, headY - 7.5 * s);
+      ctx.lineTo(dx * s, headY - 11.5 * s);
+      ctx.lineTo(dx * s + 2 * s, headY - 7.5 * s);
+      ctx.stroke();
+    }
+    torso(headY + 9 * s, hipY, 10);
+    ctx.beginPath(); // 天衣
+    ctx.moveTo(-12 * s, headY + 11 * s);
+    ctx.quadraticCurveTo(-20 * s, 0, -14 * s, hipY);
+    ctx.moveTo(12 * s, headY + 11 * s);
+    ctx.quadraticCurveTo(20 * s, 0, 14 * s, hipY);
+    ctx.stroke();
+    ctx.beginPath(); // 瓔珞
+    ctx.arc(0, headY + 13 * s, 6 * s, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+    itemAt(18 * s, -8 * s, 9 * s);
+  }
+  seated(hipY);
+  lotusSeat(hipY + 3 * s);
+  ctx.restore();
+}
+
 // 種字繪製：悉曇按幅自適，無悉曇則退羅馬轉寫
 function drawSeed(ctx, sid, bija, baseSize, maxWidth, x, y) {
   if (sid) {
@@ -325,8 +496,9 @@ function drawSeed(ctx, sid, bija, baseSize, maxWidth, x, y) {
 // ── 月輪尊形 ────────────────────────────────────────────────────────────────
 // form: bija | samaya | subtle | offer | wrath | wrath-samaya
 // sid: 悉曇種字（真形）；bija 羅馬轉寫降為輔注
-export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija' }) {
-  const key = `${form}|${id}|${zh}|${bija}|${sid}`;
+// form 'figure' 為大曼荼羅之尊形；chiken: 智拳印（金剛界大日）
+export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', chiken = false }) {
+  const key = `${form}|${id}|${zh}|${bija}|${sid}|${chiken}`;
   if (cache.has(key)) return cache.get(key);
 
   const S = 256, c = canvas(S), ctx = c.getContext('2d');
@@ -407,7 +579,14 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija' }
     ctx.restore();
   };
 
-  if (form === 'samaya' || form === 'wrath-samaya') {
+  if (form === 'figure') {
+    // 大曼荼羅：尊形之略相
+    ctx.save();
+    ctx.shadowColor = colHex;
+    ctx.shadowBlur = 7;
+    drawFigure(ctx, R, deityType(zh), samaya, { chiken });
+    ctx.restore();
+  } else if (form === 'samaya' || form === 'wrath-samaya') {
     drawIcon(R * 0.62);
   } else if (form === 'subtle') {
     // 微細：種字縮於金剛杵輪廓之中

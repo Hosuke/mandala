@@ -80,3 +80,20 @@ export function siddham(roman) {
   if (pendingCons.length) out += pendingCons.join(VIRAMA) + VIRAMA;
   return out;
 }
+
+// 整句真言：逐詞轉寫，詞間留白；連字符視為連書，省音符（'）逕去之。
+// 一詞不識，全句返空——寧缺毋誤，呼者自退羅馬。
+export function siddhamPhrase(roman) {
+  if (!roman) return '';
+  const out = [];
+  for (const tok of roman.split(/(\s+|／|·)/)) {
+    if (!tok) continue;
+    if (/^(\s+|／|·)$/.test(tok)) { out.push(tok === '／' ? ' ／ ' : ' '); continue; }
+    const word = tok.replace(/[-'’ʼ`]/g, '');
+    if (!word) continue;
+    const s = siddham(word);
+    if (!s) return '';
+    out.push(s);
+  }
+  return out.join('').replace(/\s+/g, ' ').trim();
+}

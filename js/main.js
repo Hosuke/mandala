@@ -5,11 +5,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import * as THREE from '../vendor/three.module.js';
 import { DEITIES, byId } from './data/deities.js';
-import { siddham as siddhamRaw } from './data/siddham.js';
+import { siddham as siddhamRaw, siddhamPhrase as siddhamPhraseRaw } from './data/siddham.js';
 
 // 悉曇字體未及載入時，種字退羅馬轉寫（canvas 紋理不會隨字體後到而重繪）
 let sidFontReady = false;
 const siddham = b => (sidFontReady ? siddhamRaw(b) : '');
+const sidPhrase = m => (sidFontReady && m ? siddhamPhraseRaw(m) : '');
 import {
   COURTS, RING_RADIUS, PETAL_RADIUS, FAMILY_COLOR, FAMILY_ZH, ASSEMBLIES,
 } from './data/courts.js';
@@ -42,7 +43,14 @@ const state = {
   lambda: 0, lambdaTarget: 0,
   stand: 0, entered: false,
   focusKey: null, focusRing: null, travDir: null,
+  form: 'bija', // 四曼之相：bija 法 · samaya 三昧耶 · figure 大
 };
+
+const FORMS = [
+  { key: 'bija', zh: '法曼荼羅', sub: '種字', desc: '以悉曇種字現諸尊——音聲文字之相。' },
+  { key: 'samaya', zh: '三昧耶曼荼羅', sub: '標幟', desc: '以器仗印契現諸尊——本誓之相。' },
+  { key: 'figure', zh: '大曼荼羅', sub: '尊形', desc: '以相好身形現諸尊——色身之相。入壇立起，即向羯磨。' },
+];
 
 // ── 開壇 ────────────────────────────────────────────────────────────────────
 async function boot() {
@@ -73,17 +81,24 @@ async function boot() {
   const dust = makeDust();
   scene.add(dust.points);
 
+  // 真身之相：隨 state.form 取紋理（緩生，cache 內恆存）
+  function nodeTex(d, side) {
+    const a = side === 't' ? d.t : d.k;
+    return deityTexture({
+      id: `${d.id}|${side}`, zh: a.zh, bija: a.bija, sid: siddham(a.bija),
+      samaya: d.samaya, color: FAMILY_COLOR[d.family], form: state.form,
+      chiken: state.form === 'figure' && d.id === 'center' && side === 'k',
+    });
+  }
+
   // ── 真身節點（形變之主體）──
   const nodes = [];
   const nodeById = {};
   for (const d of DEITIES) {
     if (d.rishuOnly) continue;
     const { posT, posK, hasT, hasK } = morphTargets(d);
-    const color = FAMILY_COLOR[d.family];
-    const texT = hasT ? deityTexture({ id: d.id + '|t', zh: d.t.zh, bija: d.t.bija, sid: siddham(d.t.bija), samaya: d.samaya, color, form: 'bija' }) : null;
-    const texK = hasK ? deityTexture({ id: d.id + '|k', zh: d.k.zh, bija: d.k.bija, sid: siddham(d.k.bija), samaya: d.samaya, color, form: 'bija' }) : null;
     const mat = new THREE.MeshBasicMaterial({
-      map: texT || texK, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      map: nodeTex(d, hasT ? 't' : 'k'), transparent: true, depthWrite: false, side: THREE.DoubleSide,
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
     mesh.renderOrder = 4;
@@ -93,7 +108,7 @@ async function boot() {
 
     const ringT = hasT ? (d.t.court === 'chudai' ? 0 : courtByKey[d.t.court].ring) : 0;
     const node = {
-      d, group, mesh, posT, posK, hasT, hasK, texT, texK, ringT,
+      d, group, mesh, posT, posK, hasT, hasK, ringT,
       delay: ringT * 0.045,
       sizeT: sizeOfT(d), sizeK: sizeOfK(d),
       hover: 0, mul: 1, kind: 'node',
@@ -222,6 +237,15 @@ async function boot() {
       }, 2300);
     },
     onSpace() { if (goso.active) goso.advance(); },
+    onForm() {
+      const i = FORMS.findIndex(f => f.key === state.form);
+      const next = FORMS[(i + 1) % FORMS.length];
+      state.form = next.key;
+      ui.formUI(next.sub);
+      ui.announce('四種曼荼羅 · 轉相', `${next.zh}（${next.sub}）`, next.desc);
+      ui.hideCaption(5200);
+      if (bell.ready() && !bell.isMuted()) bell.strike(174.6, { gain: 0.1, dur: 4 });
+    },
     onTraverse(dir) {
       exitKan();
       if (trav.active && state.travDir === dir) { trav.stop(); return; }
@@ -383,7 +407,7 @@ async function boot() {
       zh: aspect.zh, sk: aspect.sk,
       familyZh: FAMILY_ZH[d.family],
       colorHex: '#' + FAMILY_COLOR[d.family].toString(16).padStart(6, '0'),
-      mantra: d.mantra, desc: d.desc,
+      mantra: d.mantra, mantraSid: sidPhrase(d.mantra), desc: d.desc,
     });
     const a = document.createElement('a');
     a.href = url;
@@ -409,7 +433,8 @@ async function boot() {
   // 觀法之軀（ui 既立，乃造）
   goso = new Goso(scene, camera, {
     stage(idx, s) {
-      ui.announce(stageHead(idx), s.title, `${s.text}\n${s.mantra}`);
+      const sid = sidPhrase(s.mantra);
+      ui.announce(stageHead(idx), s.title, `${s.text}\n${sid ? sid + '\n' : ''}${s.mantra}`);
       if (bell.ready() && !bell.isMuted()) bell.strike(s.freq, { gain: 0.2, dur: 9 });
     },
     flash: () => ui.flash(),
@@ -508,7 +533,7 @@ async function boot() {
       bija: siddham(aspect.bija) || aspect.bija, bijaRoman: aspect.bija,
       name: aspect.zh, sk: aspect.sk,
       family: FAMILY_ZH[d.family], familyColor: color,
-      loc, desc: d.desc, mantra: d.mantra,
+      loc, desc: d.desc, mantra: d.mantra, mantraSid: sidPhrase(d.mantra),
     });
     ui.showCardButton(ref === bondNode); // 證卡唯結緣之尊可取
     if (bell.ready() && !bell.isMuted()) {
@@ -559,10 +584,9 @@ async function boot() {
       n.mul = damp(n.mul, mul, 6, dt);
       n.hover = damp(n.hover, hovered === n ? 1 : 0, 10, dt);
       n.mesh.material.opacity = opBase * n.mul * kanDim;
-      if (n.hasT && n.hasK && n.texT !== n.texK) {
-        const want = eff < 0.5 ? n.texT : n.texK;
-        if (n.mesh.material.map !== want) n.mesh.material.map = want;
-      }
+      const sideNow = n.hasT && n.hasK ? (eff < 0.5 ? 't' : 'k') : (n.hasT ? 't' : 'k');
+      const want = nodeTex(n.d, sideNow);
+      if (n.mesh.material.map !== want) n.mesh.material.map = want;
       // 不二之際，兩部同體之錨點微明而脹——結構於中途可見
       const advaya = n.hasT && n.hasK ? Math.max(0, 1 - Math.abs(l - 0.5) * 2.6) : 0;
       const size = (n.sizeT + (n.sizeK - n.sizeT) * eff) * (0.55 + 0.45 * opBase) *

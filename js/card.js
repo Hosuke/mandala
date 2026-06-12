@@ -2,7 +2,7 @@
 // 結緣之證：投花所得之尊，作一紙可攜之券。720×1080，紺紙金泥之製。
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, desc }) {
+export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, mantraSid, desc }) {
   const W = 720, H = 1080;
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
@@ -107,12 +107,24 @@ export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, desc 
   if (desc) {
     ctx.fillStyle = 'rgba(233,226,207,0.66)';
     ctx.font = '400 21px "LXGW WenKai TC", serif';
-    ctx.fillText(desc, W / 2, 868);
+    ctx.fillText(desc, W / 2, 858);
+  }
+  if (mantraSid) {
+    // 真言以悉曇書之
+    ctx.fillStyle = colorHex;
+    ctx.shadowColor = colorHex;
+    ctx.shadowBlur = 12;
+    let fs = 27;
+    ctx.font = `400 ${fs}px "Noto Sans Siddham"`;
+    const w = ctx.measureText(mantraSid).width;
+    if (w > W - 140) { fs *= (W - 140) / w; ctx.font = `400 ${fs}px "Noto Sans Siddham"`; }
+    ctx.fillText(mantraSid, W / 2, 906);
+    ctx.shadowBlur = 0;
   }
   if (mantra) {
     ctx.fillStyle = 'rgba(168,133,74,0.92)';
-    ctx.font = 'italic 500 21px "Cormorant Garamond", serif';
-    ctx.fillText(mantra, W / 2, 910);
+    ctx.font = 'italic 500 19px "Cormorant Garamond", serif';
+    ctx.fillText(mantra, W / 2, mantraSid ? 938 : 906);
   }
 
   // 跋

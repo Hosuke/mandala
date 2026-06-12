@@ -19,6 +19,7 @@ export function initUI(h) {
   btnEnter.addEventListener('click', () => h.onEnter());
   $('btn-toss').addEventListener('click', () => h.onToss());
   $('btn-kan').addEventListener('click', () => h.onKan());
+  $('btn-form').addEventListener('click', () => h.onForm());
   $('btn-sound').addEventListener('click', () => h.onSound());
   $('btn-reset').addEventListener('click', () => h.onReset());
   $('info-close').addEventListener('click', () => api.hideInfo());
@@ -79,7 +80,7 @@ export function initUI(h) {
         : '拖曳旋觀 · 滾輪遠近 · 點尊得詳';
     },
 
-    showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra }) {
+    showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra, mantraSid }) {
       $('info-bija').textContent = bija;
       $('info-bija').style.color = familyColor;
       $('info-bija-roman').textContent = bijaRoman && bijaRoman !== bija ? bijaRoman : '';
@@ -95,6 +96,9 @@ export function initUI(h) {
       const m = $('info-mantra');
       m.textContent = mantra || '';
       m.style.display = mantra ? '' : 'none';
+      const ms = $('info-mantra-sid');
+      ms.textContent = mantraSid || '';
+      ms.style.display = mantraSid ? '' : 'none';
       info.classList.remove('hidden');
     },
 
@@ -121,6 +125,8 @@ export function initUI(h) {
       void caption.offsetWidth;
       caption.classList.add('pulse');
     },
+
+    formUI(sub) { $('btn-form').textContent = sub; },
 
     kanUI(active) {
       $('btn-kan').textContent = active ? '出觀' : '觀法';
