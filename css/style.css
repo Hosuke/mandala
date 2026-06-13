@@ -355,7 +355,11 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
 #info-bija {
   font-family: "Noto Sans Siddham", var(--latin);
   font-size: 52px;
-  line-height: 1.15;
+  /* 悉曇懸於頭線，墨偏上；CSS 不能量墨界，故以行高與微移使其於行中視覺居中。
+     此移幅微小，羅馬退字（無悉曇時）亦不至失衡。 */
+  line-height: 1;
+  display: block;
+  padding-top: 6px;
   text-shadow: 0 0 24px currentColor;
 }
 #info-bija-roman {

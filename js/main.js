@@ -52,6 +52,15 @@ const FORM_ZH = {
 };
 const courtByKey = Object.fromEntries(COURTS.map(c => [c.key, c]));
 const PI = Math.PI;
+const EPS = 1e-4;
+
+// 取最短弧之角差，繞至 [-π, π]，使節點走短弧而不繞遠路
+const shortAngle = (a, b) => {
+  let d = (b - a) % (Math.PI * 2);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  return d;
+};
 
 // 釋義之層隨語而轉；壇上之字（尊名・名牌・種字）不譯
 const descOf = d => (lang === 'zh' ? d.desc : (DESC_I18N[lang]?.[d.id] ?? d.desc));
@@ -145,9 +154,26 @@ async function boot() {
 
     const ringT = hasT ? (d.t.court === 'chudai' ? 0 : courtByKey[d.t.court].ring) : 0;
     const kodoXZ = KODO_LAYOUT[d.id];
+    let rT = Math.hypot(posT.x, posT.z);
+    let thetaT = Math.atan2(posT.z, posT.x);
+    let rK = Math.hypot(posK.x, posK.z);
+    let thetaK = Math.atan2(posK.z, posK.x);
+    if (rT < EPS && rK < EPS) {
+      rT = 0;
+      rK = 0;
+      thetaT = 0;
+      thetaK = 0;
+    } else if (rT < EPS) {
+      rT = 0;
+      thetaT = thetaK;
+    } else if (rK < EPS) {
+      rK = 0;
+      thetaK = thetaT;
+    }
     const node = {
       d, group, mesh, posT, posK, hasT, hasK, ringT,
-      delay: ringT * 0.045,
+      rT, thetaT, rK, thetaK,
+      delay: Math.min(ringT * 0.025, 0.1),
       sizeT: sizeOfT(d), sizeK: sizeOfK(d),
       hover: 0, mul: 1, kind: 'node',
       kodoOnly: !!d.kodoOnly,
@@ -157,6 +183,9 @@ async function boot() {
     mesh.userData.ref = node;
     nodes.push(node);
     nodeById[d.id] = node;
+    // 預熱兩面之紋，免中途批量緩生而卡頓
+    if (hasT) nodeTex(d, 't');
+    if (hasK) nodeTex(d, 'k');
   }
 
   // ── 九會回響（八會之表示變換）──
@@ -250,6 +279,7 @@ async function boot() {
   let kanPulse = 0;    // 證金剛身時世界之脈動
   let kanDim = 1;      // 入觀時世界之隱顯
   let kodoMix = 0;     // 羯磨壇之隱顯
+  let preheatQueue = [];
 
   function exitKodo() {
     if (!state.kodo) return;
@@ -329,6 +359,14 @@ async function boot() {
       const i = FORMS.findIndex(f => f.key === state.form);
       const ni = (i + 1) % FORMS.length;
       state.form = FORMS[ni].key;
+      // 轉相之後，預熱新相兩面之紋，分攤數幀，使隨後「拖滑尺形變」不卡（主訴所在）。
+      // 按：轉相當幀，渲染環仍同步緩生諸尊「當前面」新相之紋——此乃點鈕之一次性微頓，
+      // 非連續拖動，故受之；此 queue 之職在預熱「另一面」，令形變流暢。
+      preheatQueue = [];
+      for (const n of nodes) {
+        if (n.hasT) preheatQueue.push([n.d, 't']);
+        if (n.hasK) preheatQueue.push([n.d, 'k']);
+      }
       const loc = lang === 'zh' ? FORMS[ni] : FORM_I18N[lang][ni];
       ui.formUI(loc.sub);
       ui.announce(T.headForm,
@@ -677,7 +715,7 @@ async function boot() {
 
   // ── 主迴圈 ──
   function effLambda(node) {
-    return smoothstep(node.delay, node.delay + 0.82, state.lambda);
+    return smoothstep(node.delay, node.delay + 0.8, state.lambda);
   }
 
   const clock = new THREE.Clock();
@@ -689,7 +727,8 @@ async function boot() {
     elapsed += dt;
 
     stepTweens(dt);
-    state.lambda = damp(state.lambda, state.lambdaTarget, 4.2, dt);
+    state.lambda = damp(state.lambda, state.lambdaTarget, 6.5, dt);
+    if (Math.abs(state.lambda - state.lambdaTarget) < 0.004) state.lambda = state.lambdaTarget;
     ui.setRealm(state.lambda);
     trav.update(dt);
     goso.update(dt);
@@ -704,13 +743,22 @@ async function boot() {
     const taizoFade = 1 - smoothstep(0, 0.5, l);
     const kongoFade = smoothstep(0.5, 1, l);
 
+    // 分幀預熱：每幀緩生少數紋理，避免單幀卡頓
+    if (preheatQueue.length) {
+      const batch = preheatQueue.splice(0, 4);
+      for (const [d, side] of batch) nodeTex(d, side);
+    }
+
     // 真身
     for (const n of nodes) {
       const eff = effLambda(n);
-      let px = n.posT.x + (n.posK.x - n.posT.x) * eff;
-      let pz = n.posT.z + (n.posK.z - n.posT.z) * eff;
+      // 極座標插值：半徑與角度各自緩進，節點循弧收束／綻放，不對穿壇心
+      const r = n.rT + (n.rK - n.rT) * eff;
+      const th = n.thetaT + shortAngle(n.thetaT, n.thetaK) * eff;
+      let px = Math.cos(th) * r;
+      let pz = Math.sin(th) * r;
       if (n.kodoPos) {
-        // 講堂成員飛赴壇位
+        // 講堂成員飛赴壇位（笛卡爾插值，無妨）
         px += (n.kodoPos.x - px) * kodoMix;
         pz += (n.kodoPos.z - pz) * kodoMix;
       }

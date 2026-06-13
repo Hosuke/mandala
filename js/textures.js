@@ -613,19 +613,48 @@ function drawFigure(ctx, R, type, samaya, { chiken = false } = {}) {
 }
 
 // 種字繪製：悉曇按幅自適，無悉曇則退羅馬轉寫
+// 真心居中：不憑 em-box（textBaseline='middle'），而以墨跡實界（actualBoundingBox）算之。
+// 悉曇懸於頭線（śirorekhā），元音符、隨韻點、止聲皆參差，em-box 之中非墨之中；
+// 故量其墨界，解出落筆點，使墨之心正坐 (x,y)，無論呼者所設 textBaseline 為何。
+function placeCentered(ctx, s, x, y) {
+  const prevAlign = ctx.textAlign, prevBaseline = ctx.textBaseline;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const m = ctx.measureText(s);
+  // actualBoundingBox* 皆自落筆點起算之正距：left／ascent 指向原點側。
+  const inkW = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+  const inkH = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+  // 落筆於 alphabetic-left；欲令墨心坐 (x,y)，解之：
+  const penX = x - inkW / 2 + m.actualBoundingBoxLeft;
+  const penY = y - inkH / 2 + m.actualBoundingBoxAscent;
+  if (Number.isFinite(penX) && Number.isFinite(penY)) {
+    ctx.fillText(s, penX, penY);
+  } else {
+    // 某器無 actualBoundingBox 度量（或字體退化）→ 退回 em-box 居中，字不至於不畫
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s, x, y);
+  }
+  ctx.textAlign = prevAlign;
+  ctx.textBaseline = prevBaseline;
+  return Number.isFinite(inkW) ? inkW : ctx.measureText(s).width;
+}
+
 function drawSeed(ctx, sid, bija, baseSize, maxWidth, x, y) {
   if (sid) {
     let fs = baseSize * 1.18;
     ctx.font = `400 ${fs}px "Noto Sans Siddham"`;
-    const w = ctx.measureText(sid).width;
-    if (w > maxWidth) {
-      fs *= maxWidth / w;
+    // 以墨界寬（非 em advance）量度，使闊真言得正縮放
+    let m = ctx.measureText(sid);
+    let inkW = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+    if (inkW > maxWidth) {
+      fs *= maxWidth / inkW;
       ctx.font = `400 ${fs}px "Noto Sans Siddham"`;
     }
-    ctx.fillText(sid, x, y);
+    placeCentered(ctx, sid, x, y);
   } else {
     ctx.font = `600 ${baseSize}px "Cormorant Garamond", serif`;
-    ctx.fillText(bija, x, y);
+    placeCentered(ctx, bija, x, y);
   }
 }
 
@@ -756,16 +785,14 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     ctx.restore();
     ctx.shadowColor = colHex;
     ctx.shadowBlur = 8 * k;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    drawSeed(ctx, sid, bija, R * 0.52, R * 1.05, 0, R * 0.02);
+    // 墨心坐杵之中（(x,y) 即墨界中心，無 -22 之屬的人手微調）
+    drawSeed(ctx, sid, bija, R * 0.52, R * 1.05, 0, 0);
   } else {
     // 種字：悉曇為正，羅馬轉寫為注
     ctx.shadowColor = colHex;
     ctx.shadowBlur = 14 * k;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    drawSeed(ctx, sid, bija, R * 0.74, R * 1.3, 0, -R * 0.12);
+    // 墨心坐輪心，微上偏以與下方羅馬輔注成均衡之縱列
+    drawSeed(ctx, sid, bija, R * 0.74, R * 1.3, 0, -R * 0.08);
     if (form !== 'offer' && sid) {
       // 羅馬轉寫輔注（供養形之蓮座居此位，故免注）
       ctx.shadowBlur = 6 * k;

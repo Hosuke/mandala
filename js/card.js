@@ -2,6 +2,26 @@
 // 結緣之證：投花所得之尊，作一紙可攜之券。720×1080，紺紙金泥之製。
 // ─────────────────────────────────────────────────────────────────────────────
 
+// 墨界居中：量 actualBoundingBox，解落筆點，使墨之心正坐 (x,y)。
+// textAlign='center' 之於闊度可，然懸頭線之悉曇縱向參差，em-box 之中非墨之中，故另算之。
+function placeInk(ctx, s, x, y) {
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const m = ctx.measureText(s);
+  const inkW = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+  const inkH = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+  const penX = x - inkW / 2 + m.actualBoundingBoxLeft;
+  const penY = y - inkH / 2 + m.actualBoundingBoxAscent;
+  if (Number.isFinite(penX) && Number.isFinite(penY)) {
+    ctx.fillText(s, penX, penY);
+  } else {
+    // 退化保底：em-box 居中，字不至於不畫
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s, x, y);
+  }
+  ctx.textAlign = 'center';
+}
+
 // foot1/foot2：跋記二行（呼者按語供之）；題簽「金胎不二」為器物之銘，不譯
 export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, mantraSid, desc,
   foot1 = '投花得佛', foot2 = '結 緣 之 證' }) {
@@ -62,22 +82,24 @@ export function bondCard({ sid, roman, zh, sk, familyZh, colorHex, mantra, mantr
   ctx.beginPath(); ctx.arc(W / 2, cy, R * 0.9, 0, 7); ctx.stroke();
   ctx.globalAlpha = 1;
 
-  // 種字
+  // 種字：以墨界實心居中（actualBoundingBox），不憑 em-box，
+  // 故去舊「cy - 22」之人手微調——悉曇懸於頭線，墨之心非 em 之心。
   ctx.fillStyle = colorHex;
   ctx.shadowColor = colorHex;
   ctx.shadowBlur = 30;
-  ctx.textBaseline = 'middle';
   if (sid) {
     let fs = 190;
     ctx.font = `400 ${fs}px "Noto Sans Siddham"`;
-    const w = ctx.measureText(sid).width;
-    if (w > R * 1.35) { fs *= (R * 1.35) / w; ctx.font = `400 ${fs}px "Noto Sans Siddham"`; }
-    ctx.fillText(sid, W / 2, cy - 22);
+    let m = ctx.measureText(sid);
+    let inkW = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+    if (inkW > R * 1.35) { fs *= (R * 1.35) / inkW; ctx.font = `400 ${fs}px "Noto Sans Siddham"`; }
+    placeInk(ctx, sid, W / 2, cy);
   } else {
     ctx.font = '600 150px "Cormorant Garamond", serif';
-    ctx.fillText(roman, W / 2, cy - 22);
+    placeInk(ctx, roman, W / 2, cy);
   }
   ctx.shadowBlur = 8;
+  ctx.textBaseline = 'middle';
   ctx.globalAlpha = 0.8;
   ctx.font = 'italic 600 34px "Cormorant Garamond", serif';
   ctx.fillText(roman, W / 2, cy + R * 0.62);
