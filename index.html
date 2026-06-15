@@ -48,12 +48,23 @@
     <button id="btn-toss" title="投花得佛：閉目擲花，花落何尊，即與何尊結緣">投花</button>
     <button id="btn-kan" title="五相成身觀：坐於壇心，觀心月輪。輕觸以進">觀法</button>
     <button id="btn-kodo" title="羯磨壇：東寺講堂二十一尊，三輪身之陣">講堂</button>
+    <button id="btn-genten" title="原典帖：歷史絹本之投影（CC0 公有領域）">原典</button>
     <button id="btn-sound" title="磬音：點尊一磬，五部各韻">默</button>
     <button id="btn-reset" title="復觀：還於俯瞰">復觀</button>
   </nav>
 
   <div id="veil"><span id="veil-text"></span></div>
   <div id="flash"></div>
+
+  <!-- 原典帖 · 歷史絹本之投影（CC0）。壇城仍零圖片；此帖獨立於外，為投影對照。 -->
+  <div id="genten-view" class="hidden" role="dialog" aria-modal="true" aria-labelledby="genten-h">
+    <button id="genten-close" aria-label="閉">×</button>
+    <header>
+      <h2 id="genten-h"></h2>
+      <p id="genten-intro"></p>
+    </header>
+    <div id="genten-grid"></div>
+  </div>
 
   <div id="caption" class="hidden">
     <div id="caption-head"></div>
@@ -83,6 +94,15 @@
     <p id="info-desc"></p>
     <p id="info-mantra-sid"></p>
     <p id="info-mantra"></p>
+    <figure id="info-genten" class="hidden">
+      <a id="info-genten-link" target="_blank" rel="noopener">
+        <img id="info-genten-img" alt="">
+      </a>
+      <figcaption>
+        <span id="info-genten-title"></span>
+        <a id="info-genten-credit" target="_blank" rel="noopener"></a>
+      </figcaption>
+    </figure>
     <button id="info-card" class="hidden">結緣之證 ↓</button>
   </aside>
 
