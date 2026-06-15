@@ -5,6 +5,10 @@
 
 瀏覽器打開即是壇城，無須構建、無須安裝、無外部圖片資源——一切尊形皆程序所現。
 
+**線上即入壇 → https://hosuke.github.io/mandala/**
+
+或於本地起任一靜態服務：
+
 ```
 python3 -m http.server 8000   # 任一靜態服務即可
 open http://localhost:8000
