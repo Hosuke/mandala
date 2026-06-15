@@ -330,13 +330,26 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   transform: translateY(-50%);
   z-index: 23;
   width: 252px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   padding: 26px 24px 22px;
   background: rgba(8, 11, 20, .82);
   border: 1px solid var(--gold-faint);
   border-radius: 2px;
   backdrop-filter: blur(10px);
   transition: opacity .45s, transform .45s;
+  /* 細捲軸，合金線暗玻璃之相 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-faint) transparent;
 }
+#info::-webkit-scrollbar { width: 6px; }
+#info::-webkit-scrollbar-thumb {
+  background: var(--gold-faint);
+  border-radius: 3px;
+}
+#info::-webkit-scrollbar-track { background: transparent; }
 #info.hidden {
   opacity: 0;
   pointer-events: none;
@@ -425,6 +438,143 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   font-style: italic;
   color: var(--gold-dim);
   line-height: 1.7;
+}
+
+/* 原典 · 詳情框中之歷史絹本投影（博物館壁牌之位） */
+#info-genten {
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed var(--gold-faint);
+}
+#info-genten.hidden { display: none; }
+#info-genten a { display: block; }
+#info-genten-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, .25);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, .4);
+  transition: filter .35s;
+}
+#info-genten a:hover #info-genten-img { filter: brightness(1.08); }
+#info-genten figcaption {
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+#info-genten-title { display: block; letter-spacing: .04em; }
+#info-genten-credit {
+  display: inline-block;
+  margin-top: 4px;
+  font-family: var(--latin);
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--gold-dim);
+  text-decoration: none;
+}
+#info-genten-credit:hover { color: var(--gold); }
+
+/* 原典帖 · 獨立陳列，與壇城零圖片之內核物理隔離 */
+#genten-view {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow-y: auto;
+  padding: 64px 6vw 72px;
+  background: rgba(5, 7, 13, .94);
+  backdrop-filter: blur(14px);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .5s ease, visibility .5s ease;
+}
+/* visibility 隨淡出而隱：閉時退出 tab 序與輔助技術樹，淡出仍在 */
+#genten-view.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+#genten-close {
+  position: fixed;
+  top: 22px;
+  right: 28px;
+  z-index: 61;
+  background: none;
+  border: none;
+  color: var(--gold-dim);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .25s;
+}
+#genten-close:hover { color: var(--gold); }
+#genten-view header { max-width: 680px; margin: 0 auto 40px; text-align: center; }
+#genten-h {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: .22em;
+  text-indent: .22em;
+  color: var(--moon);
+}
+#genten-intro {
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 2;
+  letter-spacing: .04em;
+  color: var(--gold-dim);
+}
+#genten-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 30px 26px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.genten-card {
+  width: 208px;
+  display: flex;
+  flex-direction: column;
+}
+.genten-card a { display: block; }
+.genten-card img {
+  display: block;
+  width: 100%;
+  height: 270px;
+  object-fit: contain;
+  background: rgba(0, 0, 0, .3);
+  border: 1px solid var(--gold-faint);
+  border-radius: 2px;
+  box-shadow: 0 3px 18px rgba(0, 0, 0, .45);
+  transition: filter .3s, border-color .3s;
+}
+.genten-card a:hover img { filter: brightness(1.1); border-color: var(--gold-dim); }
+.genten-card h3 {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  line-height: 1.6;
+  color: var(--moon);
+}
+.genten-card p {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.genten-card .genten-credit {
+  margin-top: 9px;
+  font-family: var(--latin);
+  font-size: 10.5px;
+  letter-spacing: .07em;
+  color: var(--gold-dim);
+  text-decoration: none;
+}
+.genten-card .genten-credit:hover { color: var(--gold); }
+@media (max-width: 560px) {
+  #genten-view { padding: 56px 20px 64px; }
+  .genten-card { width: 100%; max-width: 320px; }
 }
 
 /* 蒙眼之幕 */

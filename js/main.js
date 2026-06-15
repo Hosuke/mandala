@@ -24,6 +24,7 @@ import {
 } from './data/i18n.js';
 import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture, matcapTexture } from './textures.js';
 import { NEW_DEITIES, SANRINJIN, KODO_LAYOUT, KODO_I18N } from './data/kodo.js';
+import { gentenFor, gentenGallery } from './data/genten.js';
 import { buildSamaya } from './samaya3d.js';
 import { bondCard } from './card.js';
 import * as bell from './bell.js';
@@ -265,6 +266,7 @@ async function boot() {
   const petalGeo = new THREE.PlaneGeometry(0.85, 0.85); // 共用，免漏
   let bondNode = null;
   let bondSide = null; // 結緣當時之側（t|k），名隨緣定，不隨滑尺改
+  let infoNode = null; // 詳情框當前所示之尊；轉相時據此刷新原典圖（相隨形變）
   let tossTimer = null;
   const bondGlow = new THREE.Sprite(new THREE.SpriteMaterial({
     map: glowTexture(0xf4e0a8), transparent: true, depthWrite: false,
@@ -308,6 +310,7 @@ async function boot() {
     const fi = FORMS.findIndex(f => f.key === state.form);
     ui.formUI((lang === 'zh' ? FORMS[fi] : FORM_I18N[lang][fi]).sub);
     ui.kodoUI(state.kodo);
+    if (ui.gentenOpen()) ui.openGenten(gentenGallery()); // 原典帖若開，題簽隨語重繪
     if (bondNode) {
       const a = bondSide === 't' ? bondNode.d.t : bondNode.d.k;
       ui.setBond(T.bondPrefix(a.zh));
@@ -372,6 +375,8 @@ async function boot() {
       ui.announce(T.headForm,
         lang === 'zh' ? `${loc.zh}（${loc.sub}）` : `${loc.zh} (${loc.sub})`, loc.desc);
       ui.hideCaption(5200);
+      // 詳情框若開，原典圖隨相而變（法→種字曼荼羅・三昧耶→標幟・大→本尊畫像）。
+      if (infoNode && ui.infoOpen()) showInfo(infoNode);
       if (bell.ready() && !bell.isMuted()) bell.strike(174.6, { gain: 0.1, dur: 4 });
     },
     onLang(l) {
@@ -422,6 +427,14 @@ async function boot() {
       rig.resetView();
       ui.hideInfo();
     },
+    onGenten() {
+      // 原典帖：獨立陳列之投影對照。純覆於上，不擾壇城之態。
+      if (ui.gentenOpen()) { ui.closeGenten(); return; } // closeGenten 內回調 onGentenClose 解閘
+      rig.inputBlocked = true; // 閘住相機行步鍵（入壇時尤要）
+      rig.keys.clear();        // 撤已按住之行步鍵，免開帖後仍滑行
+      ui.openGenten(gentenGallery());
+    },
+    onGentenClose() { rig.inputBlocked = false; }, // 諸關閉路徑統一解相機閘
     onEscape() {
       if (goso?.active || kanTimer) { exitKan(); return; }
       cancelToss();
@@ -429,7 +442,7 @@ async function boot() {
       else if (trav.active) trav.stop();
       else ui.hideInfo();
     },
-  }, T);
+  }, T, lang);
 
   const trav = new Traversal({
     caption(head, title, text, i, n) {
@@ -673,9 +686,10 @@ async function boot() {
   }
 
   function showInfo(ref) {
+    infoNode = ref;
     const { d } = ref;
     const color = '#' + FAMILY_COLOR[d.family].toString(16).padStart(6, '0');
-    let aspect, loc;
+    let aspect, loc, gside = 'k';
     if (ref.kind === 'echo') {
       aspect = {
         zh: ref.zh,
@@ -688,6 +702,7 @@ async function boot() {
     } else {
       const eff = effLambda(ref);
       const side = ref.hasT && ref.hasK ? (eff < 0.5 ? 't' : 'k') : (ref.hasT ? 't' : 'k');
+      gside = side;
       aspect = side === 't' ? d.t : d.k;
       const parts = [];
       if (ref.hasT) parts.push(`${T.locT} · ${courtName(d.t.court)}`);
@@ -701,11 +716,19 @@ async function boot() {
         loc += `\n${T.dual(d.t.zh, d.k.zh)}`;
       }
     }
+    const g = gentenFor(d.id, gside, state.form);
+    const genten = g ? {
+      src: g.src,
+      title: (g.title[lang] ?? g.title.zh) + (g.note ? '　' + (g.note[lang] ?? g.note.zh) : ''),
+      credit: `${lang === 'en' ? 'Source' : '出典'} · ${g.institution} · ${g.license}`,
+      href: g.sourceUrl,
+    } : null;
     ui.showInfo({
       bija: siddham(aspect.bija) || aspect.bija, bijaRoman: aspect.bija,
       name: aspect.zh, sk: aspect.sk,
       family: famName(d.family), familyColor: color,
       loc, desc: descOf(d), mantra: d.mantra, mantraSid: sidPhrase(d.mantra),
+      genten,
     });
     ui.showCardButton(ref === bondNode); // 證卡唯結緣之尊可取
     if (bell.ready() && !bell.isMuted()) {

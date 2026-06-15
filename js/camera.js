@@ -35,6 +35,7 @@ export class Rig {
     this.idleTime = 0;
     this.glideSpeed = 2.4;
     this.frozen = false; // 觀坐：可環顧，不可行步
+    this.inputBlocked = false; // 模態（原典帖）開啟時閘住鍵盤行步，不擾背後
 
     this._bind();
   }
@@ -73,6 +74,7 @@ export class Rig {
       }
     }, { passive: false });
     window.addEventListener('keydown', e => {
+      if (this.inputBlocked) return; // 模態開啟，吞行步鍵
       if (['KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) this.keys.add(e.code);
     });
     window.addEventListener('keyup', e => this.keys.delete(e.code));

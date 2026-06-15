@@ -1,2 +1,6 @@
 .DS_Store
 node_modules/
+
+# A 階段逐尊參攷圖：許可不可 ship，永不提交、永不上線。
+# 注冊表（js/data/genten.js）一視同仁登記，檔案缺失則詳情框優雅缺省。
+assets/參攷-local/

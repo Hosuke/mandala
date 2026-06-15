@@ -3,8 +3,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
-export function initUI(h, T0) {
+export function initUI(h, T0, langKey0 = 'zh') {
   let T = T0; // 三語標籤表（i18n.uiTable）
+  let curLang = langKey0; // 當前語鍵，原典帖取局部化題簽用
   const lambda = $('lambda');
   const caption = $('caption');
   const info = $('info');
@@ -48,6 +49,8 @@ export function initUI(h, T0) {
   $('btn-kodo').addEventListener('click', () => h.onKodo());
   $('btn-sound').addEventListener('click', () => h.onSound());
   $('btn-reset').addEventListener('click', () => h.onReset());
+  $('btn-genten').addEventListener('click', () => h.onGenten());
+  $('genten-close').addEventListener('click', () => api.closeGenten());
   $('info-close').addEventListener('click', () => api.hideInfo());
   $('info-card').addEventListener('click', () => h.onCard());
   $('bond-line').addEventListener('click', () => h.onBondClick());
@@ -55,6 +58,11 @@ export function initUI(h, T0) {
     b.addEventListener('click', () => h.onLang(b.dataset.lang)));
 
   window.addEventListener('keydown', e => {
+    // 原典帖開啟時為模態：唯 Esc 關之，其餘快捷鍵吞下，不擾背後壇城
+    if (api.gentenOpen()) {
+      if (e.code === 'Escape') api.closeGenten();
+      return;
+    }
     if (e.code === 'ArrowLeft') h.onLambda(Math.max(0, lambda.value / 1000 - 0.04), true);
     if (e.code === 'ArrowRight') h.onLambda(Math.min(1, lambda.value / 1000 + 0.04), true);
     if (e.code === 'Escape') h.onEscape();
@@ -102,7 +110,7 @@ export function initUI(h, T0) {
       $('hint').textContent = entered ? T.hintFP : T.hintAerial;
     },
 
-    showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra, mantraSid }) {
+    showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra, mantraSid, genten }) {
       $('info-bija').textContent = bija;
       $('info-bija').style.color = familyColor;
       $('info-bija-roman').textContent = bijaRoman && bijaRoman !== bija ? bijaRoman : '';
@@ -121,12 +129,68 @@ export function initUI(h, T0) {
       const ms = $('info-mantra-sid');
       ms.textContent = mantraSid || '';
       ms.style.display = mantraSid ? '' : 'none';
+      const fig = $('info-genten');
+      if (genten) {
+        const img = $('info-genten-img');
+        img.onerror = () => fig.classList.add('hidden'); // 缺檔則優雅缺省（本地參攷圖不上線時）
+        img.src = genten.src;
+        img.alt = genten.title;
+        $('info-genten-link').href = genten.href;
+        $('info-genten-title').textContent = genten.title;
+        const credit = $('info-genten-credit');
+        credit.textContent = genten.credit;
+        credit.href = genten.href;
+        fig.classList.remove('hidden');
+      } else {
+        fig.classList.add('hidden');
+      }
       info.classList.remove('hidden');
     },
 
     hideInfo() {
       info.classList.add('hidden');
       $('info-card').classList.add('hidden');
+    },
+
+    infoOpen() { return !info.classList.contains('hidden'); },
+
+    gentenOpen() { return !$('genten-view').classList.contains('hidden'); },
+
+    openGenten(items) {
+      const loc = o => (o ? (o[curLang] ?? o.zh) : '');
+      $('genten-h').textContent = T.gentenTitle;
+      $('genten-intro').textContent = T.gentenIntro;
+      const grid = $('genten-grid');
+      grid.textContent = '';
+      for (const it of items) {
+        const card = document.createElement('figure');
+        card.className = 'genten-card';
+        const a = document.createElement('a');
+        a.href = it.sourceUrl; a.target = '_blank'; a.rel = 'noopener';
+        const img = document.createElement('img');
+        img.alt = loc(it.title); img.loading = 'lazy'; img.decoding = 'async';
+        img.onerror = () => card.remove(); // 缺檔則撤卡（本地參攷圖不上線時）
+        img.src = it.src;
+        a.appendChild(img);
+        const h3 = document.createElement('h3');
+        h3.textContent = loc(it.title);
+        const p = document.createElement('p');
+        p.textContent = loc(it.note);
+        const credit = document.createElement('a');
+        credit.className = 'genten-credit';
+        credit.href = it.sourceUrl; credit.target = '_blank'; credit.rel = 'noopener';
+        credit.textContent = `${curLang === 'en' ? 'Source' : '出典'} · ${it.institution} · ${it.license} ↗`;
+        card.append(a, h3, p, credit);
+        grid.appendChild(card);
+      }
+      $('genten-view').classList.remove('hidden');
+      $('genten-close').focus(); // 焦點移入覆蓋層（aria-modal）
+    },
+
+    closeGenten() {
+      $('genten-view').classList.add('hidden');
+      $('btn-genten').focus(); // 焦點歸於喚起之鈕
+      if (h.onGentenClose) h.onGentenClose(); // 凡關閉（鈕／Esc／切換）皆解相機閘
     },
 
     showCardButton(on) { $('info-card').classList.toggle('hidden', !on); },
@@ -171,6 +235,9 @@ export function initUI(h, T0) {
 
     setLangTable(table, langKey) {
       T = table;
+      curLang = langKey;
+      $('btn-genten').textContent = T.gentenBtn;
+      $('btn-genten').title = T.titles.genten;
       // 懸浮提示（title）亦隨語
       const TITLE_IDS = {
         descent: 'btn-descent', ascent: 'btn-ascent', form: 'btn-form',
