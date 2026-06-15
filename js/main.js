@@ -716,7 +716,8 @@ async function boot() {
         loc += `\n${T.dual(d.t.zh, d.k.zh)}`;
       }
     }
-    const g = gentenFor(d.id, gside, state.form);
+    const gform = ref.kind === 'echo' ? ref.assembly.form : state.form;
+    const g = gentenFor(d.id, gside, gform);
     const genten = g ? {
       src: g.src,
       title: (g.title[lang] ?? g.title.zh) + (g.note ? '　' + (g.note[lang] ?? g.note.zh) : ''),

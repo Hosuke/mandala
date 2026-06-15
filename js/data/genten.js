@@ -56,6 +56,43 @@ export const GENTEN = [
     sourceUrl: 'https://www.metmuseum.org/art/collection/search/44845',
     shippable: true,
   },
+  {
+    // 金剛界大日 · 尊形相之單裁。form 限定使其僅覆蓋「尊形」相；
+    // 種字相仍用梵字曼荼羅，三昧耶相仍可見全卷白描。
+    id: 'center', side: 'k', form: 'figure',
+    src: 'assets/原典/met-44845-center.jpg',
+    title: {
+      zh: '金剛界大日如來白描（1083）',
+      en: 'Mahāvairocana, Diamond World handscroll detail (1083)',
+      ja: '金剛界大日如來白描（1083）',
+    },
+    note: {
+      zh: '自金剛界諸尊白描卷 DP278116 重裁。智拳印、五智寶冠、師子座與下方 vaṃ 種字並見，為金剛界大日之確證。',
+      en: 'A detail cropped from DP278116 of the Diamond World handscroll. The wisdom-fist mudrā, five-wisdom crown, lion throne, and vaṃ syllable identify Mahāvairocana.',
+      ja: '金剛界諸尊白描卷 DP278116 より重裁。智拳印・五智寶冠・師子座・下方の vaṃ 種子により金剛界大日と確證される。',
+    },
+    institution: 'The Met', date: '1083', license: 'CC0',
+    sourceUrl: 'https://www.metmuseum.org/art/collection/search/44845',
+    shippable: true,
+  },
+  {
+    // 金剛護 · Diamond Realm 北方不空成就眷屬之單尊原典。
+    id: 'k-gou', side: 'k', form: 'figure',
+    src: 'assets/原典/cma-1989.363-k-gou.jpg',
+    title: {
+      zh: '金剛護菩薩銀像（西藏西部・10世紀）',
+      en: 'Bodhisattva Vajraraksha, Western Tibet (c. 900s)',
+      ja: '金剛護菩薩銀像（西チベット・10世紀）',
+    },
+    note: {
+      zh: 'CMA 原說明列其為 Diamond Realm（Vajradhātu）諸尊之一，居北方，為不空成就佛之眷屬；與金剛界金剛護（Vajrarakṣa）相應。',
+      en: 'CMA identifies the figure as part of the Diamond Realm (Vajradhātu), seated in the northern quadrant as a subsidiary of Amoghasiddhi; this matches Vajrarakṣa.',
+      ja: 'CMA 解說は本像を Diamond Realm（Vajradhātu）の一尊、北方に坐す不空成就の眷屬とする。金剛界の金剛護（Vajrarakṣa）に相應する。',
+    },
+    institution: 'Cleveland Museum of Art', date: 'c. 900s', license: 'CC0',
+    sourceUrl: 'https://www.clevelandart.org/art/1989.363',
+    shippable: true,
+  },
 
   // ── 原典帖 · 暫不對應引擎尊位，僅入陳列（無 id，gallery:true）─────────────
   {
