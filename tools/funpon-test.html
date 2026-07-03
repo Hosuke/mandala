@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>粉本試筆 · 五佛十面</title>
+<style>
+  body { background: #0c1020; color: #d8b36a; font: 14px/1.6 serif; margin: 24px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; }
+  figure { margin: 0; text-align: center; }
+  canvas { background: radial-gradient(circle, #141a30 0%, #0c1020 100%); border-radius: 50%; }
+  figcaption { font-size: 12px; margin-top: 4px; }
+  h2 { font-weight: normal; border-bottom: 1px solid #3a3a52; padding-bottom: 6px; }
+</style>
+</head>
+<body>
+<h2>粉本試筆 · 五佛十面（量度格網＋儀軌已核）</h2>
+<div class="row" id="grid"></div>
+<h2>中尊放大 · 金剛界大日（菩薩形智拳印）與胎藏大日（菩薩形法界定印）</h2>
+<div class="row" id="big"></div>
+<script type="module">
+import { GIKI } from '../js/data/giki.js';
+import { drawFunpon } from '../js/funpon.js';
+import { byId } from '../js/data/deities.js';
+
+function render(el, face, label, size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  ctx.translate(size / 2, size / 2);
+  ctx.strokeStyle = '#d8b36a';
+  ctx.fillStyle = '#d8b36a';
+  drawFunpon(ctx, size / 2, face);
+  const fig = document.createElement('figure');
+  fig.appendChild(c);
+  const cap = document.createElement('figcaption');
+  cap.textContent = label;
+  fig.appendChild(cap);
+  el.appendChild(fig);
+}
+
+const grid = document.getElementById('grid');
+for (const g of GIKI) {
+  for (const side of ['t', 'k']) {
+    const f = g[side];
+    if (!f || f.信 !== '已核') continue;
+    const zh = byId[g.id][side].zh;
+    render(grid, f, `${side === 't' ? '胎' : '金'}·${zh}·${f.印}`, 236);
+  }
+}
+const big = document.getElementById('big');
+render(big, GIKI[0].k, '金剛界大日 512', 512);
+render(big, GIKI[0].t, '胎藏大日 512', 512);
+</script>
+</body>
+</html>

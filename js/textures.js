@@ -3,6 +3,8 @@
 // 不取一張圖片資源；如曼荼羅之本義，相由法生。
 // ─────────────────────────────────────────────────────────────────────────────
 import * as THREE from '../vendor/three.module.js';
+import { kosareta } from './data/giki.js';
+import { drawFunpon } from './funpon.js';
 
 const GOLD = '#d8b36a';
 const GOLD_DIM = '#a8854a';
@@ -762,7 +764,16 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     ctx.shadowBlur = 7 * k;
     if (form === 'figure-subtle') ctx.scale(0.62, 0.62);
     else if (form === 'figure-offer') { ctx.translate(0, -R * 0.07); ctx.scale(0.86, 0.86); }
-    drawFigure(ctx, R, deityType(zh), samaya, { chiken });
+    // 粉本之閘：儀軌「已核」者依量度格網落筆；餘者仍現佔位略相（寧缺毋誤）。
+    // id 二格式：主壇「尊|側」，九會「會|尊」（九會皆金剛界之相）。
+    const fp = (() => {
+      const p = id.split('|');
+      if (p[1] === 't' || p[1] === 'k') return kosareta(p[0], p[1]);
+      if (p.length === 2) return kosareta(p[1], 'k');
+      return null;
+    })();
+    if (fp) drawFunpon(ctx, R, fp);
+    else drawFigure(ctx, R, deityType(zh), samaya, { chiken });
     ctx.restore();
     if (form === 'figure-offer') {
       // 供養會：下捧蓮臺
