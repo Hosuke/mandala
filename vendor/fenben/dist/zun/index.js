@@ -45,6 +45,9 @@ import { 普賢菩薩 } from './fugen-t.js';
 import { 文殊師利菩薩 } from './monju-t.js';
 import { 觀自在菩薩 } from './kannon-t.js';
 import { 彌勒菩薩 } from './miroku-t.js';
+import { 釋迦牟尼佛 } from './shaka-h.js';
+import { 藥師如來 } from './yakushi-h.js';
+import { 阿彌陀如來漢 } from './mida-h.js';
 export const 落筆簿 = {
     'center|k': 大日金剛界,
     'fugen|k': 金剛薩埵,
@@ -95,6 +98,10 @@ export const 落筆簿 = {
     'kannon|t': 觀自在菩薩,
     'miroku|t': 彌勒菩薩,
     // 胎藏中臺八葉院滿（諸院候波）
+    'shaka|h': 釋迦牟尼佛,
+    'yakushi|h': 藥師如來,
+    'mida|h': 阿彌陀如來漢,
+    // 漢傳橫三世立（豎三世・藥師眷屬・星供候波）
 };
 // 候審筆：儀軌信雖已核（字段出典俱足），**筆**未經主人過目者——
 // 陳列頁當現朱界候審，主人印可乃摘（候審之律，勿使新筆僭已核之章）
