@@ -1,0 +1,53 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>立體三昧耶 · 試笵</title>
+<style>
+  body { margin: 0; background: #0c1020; color: #cdbb96; font: 14px serif; }
+  #grid { display: grid; grid-template-columns: repeat(8, 190px); }
+  .cell { width: 190px; text-align: center; padding-bottom: 8px; }
+  .new span { color: #e8b04c; }
+</style>
+<div id="grid"></div>
+<script type="module">
+// 試笵：立體三昧耶全鍵一格一器，3/4 視角——放樣親驗之頁。
+// 單渲染器逐器出圖再拷 2D 畫布（多 WebGL context 逾瀏覽器之限故）。
+import * as THREE from '../vendor/three.module.js';
+import { buildSamaya, SAMAYA3D_KEYS } from '../js/samaya3d.js';
+import { matcapTexture } from '../js/textures.js';
+
+const NEW = new Set(['smile', 'armor', 'garland', 'lute', 'incense', 'lamp',
+  'rope', 'chain', 'fang', 'conch', 'flower', 'fist']);
+const matcap = matcapTexture();
+const grid = document.getElementById('grid');
+
+const S = 380;
+const off = document.createElement('canvas');
+off.width = off.height = S;
+const renderer = new THREE.WebGLRenderer({ canvas: off, antialias: true });
+renderer.setClearColor(0x0c1020, 1);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 10);
+cam.position.set(1.15, 0.7, 2.05);
+cam.lookAt(0, 0, 0);
+
+for (const key of SAMAYA3D_KEYS) {
+  const obj = buildSamaya(key, { matcap });
+  obj.rotation.y = -0.4;
+  scene.add(obj);
+  renderer.render(scene, cam);
+  scene.remove(obj);
+
+  const cell = document.createElement('div');
+  cell.className = 'cell' + (NEW.has(key) ? ' new' : '');
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  cv.style.width = cv.style.height = '190px';
+  cv.getContext('2d').drawImage(off, 0, 0);
+  cell.appendChild(cv);
+  const label = document.createElement('span');
+  label.textContent = key;
+  cell.appendChild(label);
+  grid.appendChild(cell);
+}
+window.__ready = true;
+</script>

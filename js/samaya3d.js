@@ -374,30 +374,240 @@ const BUILDERS = {
     g.add(band, knot);
     return g;
   },
+
+  // ── 以下十二器依粉本 dist/型制.json 放樣（2026-07-09 型制十二條）──────────
+  // 型制座標 z 向下正、徑＝全寬；此處 y=-z、r=徑/2，比例一依其層，歸一交 buildSamaya。
+
+  smile(mat) { // 笑杵（k-sho）：二支三鈷杵平行橫疊，軸距3.5——非旋成體，勿旋
+    const g = new THREE.Group();
+    for (const dy of [1.6, -1.9]) {          // 軸心 z=∓1.6/+1.9（微不對稱依型制）
+      const v = vajra(mat, 2);
+      v.scale.setScalar(0.85);
+      v.rotation.z = Math.PI / 2;
+      v.position.y = dy === 1.6 ? 0.29 : -0.34;  // 以杵長6.1為1歸一之距
+      g.add(v);
+    }
+    return g;
+  },
+
+  armor(mat) { // 甲冑（k-gou）：領口U・胸甲殼・腰收札紋・裾張中垂弧，薄殼
+    const g = new THREE.Group();
+    const s = new THREE.Shape();               // 半寬序列依型制層：2.3/2.7/2.3/1.9
+    s.moveTo(-0.75, 2.35);                     // 領左
+    s.quadraticCurveTo(0, 1.95, 0.75, 2.35);   // U形領
+    s.lineTo(2.3, 2.15);                       // 肩線
+    s.quadraticCurveTo(2.75, 1.6, 2.7, 0.9);   // 胸甲上段外張
+    s.quadraticCurveTo(2.55, -0.4, 2.3, -1.3); // 腰收
+    s.lineTo(1.9, -2.6);                       // 裾張內斂
+    s.quadraticCurveTo(0, -3.05, -1.9, -2.6);  // 下緣中垂弧
+    s.lineTo(-2.3, -1.3);
+    s.quadraticCurveTo(-2.55, -0.4, -2.7, 0.9);
+    s.quadraticCurveTo(-2.75, 1.6, -2.3, 2.15);
+    s.closePath();
+    g.add(extrude(mat, s, 0.32));
+    for (const y of [0.9, -0.2, -1.3]) {       // 札三段之界
+      const rib = new THREE.Mesh(new THREE.BoxGeometry(4.4 - Math.abs(y) * 0.5, 0.1, 0.4), mat);
+      rib.position.set(0, y, 0);
+      g.add(rib);
+    }
+    const mid = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4.6, 0.38), mat); // 中線豎一道
+    mid.position.y = -0.25;
+    g.add(mid);
+    return g;
+  },
+
+  garland(mat) { // 華鬘（g-man）：正圓環面＋綴珠十顆＋垂帶二條——勿借 wheel（輪有輻此無）
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.35, 12, 40), mat));
+    for (let i = 0; i < 10; i++) {             // 珠鏈沿環交錯
+      const a = (i / 10) * TAU;
+      const bead = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), mat);
+      bead.position.set(Math.cos(a) * 2.5, Math.sin(a) * 2.5, i % 2 ? 0.28 : -0.28);
+      g.add(bead);
+    }
+    for (const d of [-1, 1]) {                 // 垂帶自環底左右各一，微S擺
+      g.add(tube(mat, [
+        [d * 0.55, -2.7, 0], [d * 0.8, -3.4, 0.1], [d * 0.5, -4.4, -0.06], [d * 0.75, -5.4, 0],
+      ], 0.13, 12));
+    }
+    return g;
+  },
+
+  lute(mat) { // 箜篌（g-ka）：弓形豎箜篌——彎管響胴＋直棹＋弦五道，皆非旋成
+    const g = new THREE.Group();
+    g.add(tube(mat, [                          // 響胴：弧自(-2.6,2.6)經(-2.4,0.2)至(0.2,-2.6)（型制xz→xy翻）
+      [-2.6, -2.6, 0], [-2.55, -1.2, 0], [-2.4, -0.2, 0], [-1.6, 1.5, 0], [0.2, 2.6, 0],
+    ], 0.5, 24));
+    const zhao = tube(mat, [[0.2, 2.6, 0], [2.8, 1.6, 0]], 0.15, 8);  // 棹：胴首直出
+    g.add(zhao);
+    for (let i = 0; i < 5; i++) {              // 弦五道：胴身與棹間平行斜張（弦數〔闕〕姑五）
+      const t = i / 4;
+      const a = [0.55 + t * 1.85, 2.32 - t * 0.72, 0];   // 沿棹
+      const b = [-2.52 + t * 2.2, -1.0 - t * 1.35, 0];   // 沿胴下段
+      g.add(tube(mat, [a, b], 0.035, 4));
+    }
+    return g;
+  },
+
+  incense(mat) { // 寶香爐（g-ko）：火舎形坐爐——鈕珠・穹蓋・爐腹・三足，全旋
+    const g = new THREE.Group();
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 10), mat);
+    knob.position.y = 1.85;
+    g.add(knob);
+    g.add(lathe(mat, [[1.9, 0.5], [1.5, 1.1], [0.45, 1.7]], 24));      // 穹蓋
+    g.add(lathe(mat, [                                                  // 爐腹：口緣微斂碗
+      [0, -1.85], [1.1, -1.7], [1.75, -1.1], [2.05, -0.2], [2.0, 0.2], [2.1, 0.3],
+    ], 24));
+    for (let i = 0; i < 3; i++) {                                       // 三足外張
+      const a = (i / 3) * TAU + Math.PI / 6;
+      const leg = cyl(mat, 0.11, 0.13, 1.05, 8);
+      leg.position.set(Math.cos(a) * 1.4, -2.2, Math.sin(a) * 1.4);
+      leg.rotation.z = Math.cos(a) * -0.18;
+      leg.rotation.x = Math.sin(a) * 0.18;
+      g.add(leg);
+    }
+    return g;
+  },
+
+  lamp(mat) { // 寶燈（g-to）：焰・盞・柱・座盤（扁鼓）
+    const g = new THREE.Group();
+    for (const a of [-0.7, 0, 0.7]) {          // 一莖三舌之焰（面片）
+      const f = extrude(mat, flameShape(1.9, 0.6), 0.1);
+      f.position.set(Math.sin(a) * 0.5, 0.55, 0);
+      f.rotation.z = -a * 0.8;
+      g.add(f);
+    }
+    g.add(lathe(mat, [[0.2, -0.95], [0.5, -0.5], [1.3, 0.28], [1.35, 0.4], [0, 0.35]], 20)); // 盞
+    const pillar = cyl(mat, 0.2, 0.28, 1.15, 10);
+    pillar.position.y = -1.52;
+    g.add(pillar);
+    g.add(lathe(mat, [[0, -2.75], [0.9, -2.62], [1.0, -2.37], [0.9, -2.12], [0, -2.0]], 20)); // 座盤扁鼓
+    return g;
+  },
+
+  rope(mat) { // 羂索（s-saku）：橢環繩管＋交結＋垂端二（端珠）——引入之索
+    const g = new THREE.Group();
+    const pts = [];
+    for (let i = 0; i <= 40; i++) {            // 橢環 2.7×2.4，心上移0.24
+      const a = (i / 40) * TAU;
+      pts.push([Math.cos(a) * 2.7, 0.24 + Math.sin(a) * 2.4, 0]);
+    }
+    g.add(tube(mat, pts, 0.175, 48));
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), mat); // 交結
+    knot.position.y = -2.65;
+    g.add(knot);
+    for (const d of [-1, 1]) {                 // 垂端二，端珠 r0.22
+      g.add(tube(mat, [[d * 0.12, -2.8, 0], [d * 0.38, -3.6, 0.05], [d * 0.3, -4.35, 0]], 0.14, 8));
+      const bead = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), mat);
+      bead.position.set(d * 0.3, -4.4, 0);
+      g.add(bead);
+    }
+    return g;
+  },
+
+  chain(mat) { // 金剛鎖（s-sa）：兩端豎三鈷、中鏈三環相扣——縛住之鎖（㋐式）
+    const g = new THREE.Group();
+    for (const [yc, flip] of [[3.05, 0], [-3.25, Math.PI]]) {
+      const v = vajra(mat, 2);
+      v.scale.setScalar(0.55 * 3.7);           // 比0.55（vajra 高1 → 3.7 局部單位）
+      v.position.y = yc;
+      v.rotation.z = flip;
+      g.add(v);
+    }
+    [1.1, -0.1, -1.3].forEach((yc, i) => {     // 環各≈1.05×1.3 相扣，縱橫交替
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.1, 8, 18), mat);
+      ring.scale.y = 1.24;
+      ring.position.y = yc;
+      ring.rotation.y = i % 2 ? Math.PI / 2 : 0;
+      g.add(ring);
+    });
+    return g;
+  },
+
+  fang(mat) { // 二利牙（k-ge）：新月二牙鼓外鋒內顧・側半三鈷爪・橫獨鈷杵座
+    const g = new THREE.Group();
+    for (const d of [-1, 1]) {
+      const ix = 0.34, iy = 1.62;              // 新月板：外弧r1.8內弧r1.55之交
+      const a1 = Math.atan2(iy, ix);
+      const b1 = Math.atan2(iy, ix - 0.5);
+      const s = new THREE.Shape();
+      s.absarc(0, 0, 1.8, a1, TAU - a1, false);
+      s.absarc(0.5, 0, 1.55, -b1, b1, true);
+      const m = extrude(mat, s, 0.15);
+      m.position.set(d * 1.45, 0.1, 0);
+      m.rotation.z = d > 0 ? Math.PI : 0;      // 弧鼓向外、鋒上微內顧
+      m.rotation.z += d * -0.12;
+      g.add(m);
+      g.add(tube(mat, [                        // 側半三鈷爪
+        [d * 2.75, -0.3, 0], [d * 3.4, 0.5, 0], [d * 3.1, 1.4, 0], [d * 2.8, 1.75, 0],
+      ], 0.12, 10));
+    }
+    const base = vajra(mat, 0);                // 橫獨鈷杵座（軸心 z=+2.2）
+    base.scale.setScalar(3.4);
+    base.rotation.z = Math.PI / 2;
+    base.position.y = -2.2;
+    g.add(base);
+    return g;
+  },
+
+  conch(mat) { // 塗香器（g-zu）：有蓋香盒——鈕・扁穹蓋・圓底盒身，全旋
+    const g = new THREE.Group();
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), mat);
+    knob.position.y = 1.15;
+    g.add(knob);
+    g.add(lathe(mat, [[1.7, 0.1], [1.75, 0.15], [1.5, 0.55], [0.5, 1.0]], 22));  // 蓋（緣一線）
+    g.add(lathe(mat, [                                                            // 盒身圓底收
+      [0, -1.85], [0.9, -1.7], [1.5, -1.2], [1.72, -0.55], [1.7, -0.1],
+    ], 22));
+    return g;
+  },
+
+  flower(mat) { // 盛華器（g-ke）：淺盤盛滿花——「盛」字要緊非空盤
+    const g = new THREE.Group();
+    g.add(lathe(mat, [                          // 盤：口緣內一弧示唇
+      [0, -1.95], [1.0, -1.9], [1.4, -1.6], [2.2, -0.9], [2.45, -0.42], [2.6, -0.3],
+    ], 24));
+    const foot = cyl(mat, 1.1, 1.15, 0.3, 16);  // 圈足
+    foot.position.y = -2.1;
+    g.add(foot);
+    [[-1.3, 0.62], [0, 0.72], [1.3, 0.62]].forEach(([x, r]) => {  // 盛華三簇五瓣周張
+      const head = new THREE.Mesh(new THREE.SphereGeometry(r * 0.62, 10, 8), mat);
+      head.position.set(x, 0.55, 0);
+      g.add(head);
+      for (let i = 0; i < 5; i++) {
+        const hold = new THREE.Group();
+        hold.position.set(x, 0.55, 0);
+        hold.rotation.y = (i / 5) * TAU;
+        const p = extrude(mat, petalShape(r * 0.42, r * 1.05), 0.03);
+        p.position.set(0, -r * 0.25, r * 0.42);
+        p.rotation.x = -0.85;
+        hold.add(p);
+        g.add(hold);
+      }
+    });
+    return g;
+  },
+
+  fist(mat) { // 金剛縛（k-ken）：手形雕塑非幾何體（型制注）——暫依其議獨鈷橫置，真手模候後
+    const v = vajra(mat, 0);
+    v.rotation.z = Math.PI / 2;
+    const g = new THREE.Group();
+    g.add(v);
+    return g;
+  },
 };
 
-// 餘鍵歸於近形之器
+// 餘鍵歸於近形之器（型制十二條已放樣為專形：smile/armor/garland/lute/
+// incense/lamp/rope/chain/fang/conch/flower/fist 自此除名，2026-07-09）
 const ALIAS = {
   'lotus-blue': 'lotus',
   'stupa-small': 'stupa',
   flame: 'flame-tri',
   arrow: 'sword',
   needle: 'sword',
-  smile: 'moon',
   tongue: 'flame-tri',
-  lamp: 'jewel-flame',
-  flower: 'lotus',
-  garland: 'wheel',
   eye: 'sun',
-  fang: 'hook',
-  rope: 'hook',
-  chain: 'hook',
-  conch: 'vase',
-  incense: 'vase',
-  lute: 'vase',
   horse: 'trident',
-  armor: 'vajra1',
-  fist: 'vajra1',
 };
 
 export const SAMAYA3D_KEYS = Object.keys(BUILDERS);
