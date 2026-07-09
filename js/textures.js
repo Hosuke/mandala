@@ -10,7 +10,29 @@ const GOLD_DIM = '#a8854a';
 const INK = '#0c1020';
 const VERMILION = '#c4502f';
 
-const cache = new Map();
+const cache = new Map();   // 常駐小紋之藏（label／glow／月輪等，終生不逐）
+
+// 尊紋別藏：Map 之序即近用之序（取則移末）；升幅之後位圖漸巨，
+// 逾預算則自首逐舊而 dispose——毋使換相累積至低配 WebGL 失聯。
+// 別藏之由：常駐小紋開壇即繫於材質，誤逐即破相，故不與尊紋同柜。
+const zunCache = new Map();
+let zunBytes = 0;
+const ZUN_CAP = 384 * 1024 * 1024;   // 位圖字節之估（GPU 副本同量另計）
+const texBytes = t => t.image.width * t.image.height * 4;
+function zunGet(key) {
+  const t = zunCache.get(key);
+  if (t) { zunCache.delete(key); zunCache.set(key, t); }   // 移末誌其近用
+  return t;
+}
+function zunPut(key, tex) {
+  zunCache.set(key, tex);
+  zunBytes += texBytes(tex);
+  for (const [k, t] of zunCache) {
+    if (zunBytes <= ZUN_CAP || k === key) break;
+    zunCache.delete(k); zunBytes -= texBytes(t); t.dispose();
+  }
+  return tex;
+}
 
 function canvas(size) {
   const c = document.createElement('canvas');
@@ -665,9 +687,12 @@ function drawSeed(ctx, sid, bija, baseSize, maxWidth, x, y) {
 // sid: 悉曇種字（真形）；bija 羅馬轉寫降為輔注
 // form 'figure' 為大曼荼羅之尊形；chiken: 智拳印（金剛界大日）
 // res: 畫布之幅（預設 256；中尊可付 384 以求精細）
-export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', chiken = false, res = 256 }) {
+export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', chiken = false, res = 256, persist = false }) {
+  // persist：九會回響之屬——開壇一繫於材質、終生不再回柜問津，入常駐之藏免遭誤逐；
+  // 主壇節點紋每幀回柜（近用不老），居字節預算柜，逾額逐舊
   const key = `${form}|${id}|${zh}|${bija}|${sid}|${chiken}|${res}`;
-  if (cache.has(key)) return cache.get(key);
+  const hit = persist ? cache.get(key) : zunGet(key);
+  if (hit) return hit;
 
   const S = res, k = res / 256, c = canvas(S), ctx = c.getContext('2d');
   const cx = S / 2, cy = S / 2;
@@ -760,7 +785,8 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     }
     ctx.save();
     ctx.shadowColor = colHex;
-    ctx.shadowBlur = 7 * k;
+    // 專筆數百線密，逐筆重暈（7k）則暈積成霧、筆意盡沒——微暈存輝而已
+    ctx.shadowBlur = 2 * k;
     if (form === 'figure-subtle') ctx.scale(0.62, 0.62);
     else if (form === 'figure-offer') { ctx.translate(0, -R * 0.07); ctx.scale(0.86, 0.86); }
     // 粉本之閘（適配見 funpon.落筆）：先問粉本庫 vendor/fenben，次壇城自藏十面，
@@ -771,7 +797,7 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
       if (p.length === 2) return 落筆(ctx, R, p[1], 'k');
       return false;
     })();
-    if (!done) drawFigure(ctx, R, deityType(zh), samaya, { chiken });
+    if (!done) { ctx.shadowBlur = 7 * k; drawFigure(ctx, R, deityType(zh), samaya, { chiken }); }
     ctx.restore();
     if (form === 'figure-offer') {
       // 供養會：下捧蓮臺
@@ -797,7 +823,7 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     if (器鍵) {
       ctx.save();
       ctx.shadowColor = colHex;
-      ctx.shadowBlur = 8 * k;
+      ctx.shadowBlur = 2 * k;   // 器筆三等線，重暈亦沒筆——同尊形之制
       drawn = 器筆(ctx, R, 器鍵);
       ctx.restore();
     }
@@ -852,8 +878,8 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
   const tex = new THREE.CanvasTexture(c);
   tex.anisotropy = 4;
   tex.colorSpace = THREE.SRGBColorSpace;
-  cache.set(key, tex);
-  return tex;
+  if (persist) { cache.set(key, tex); return tex; }
+  return zunPut(key, tex);
 }
 
 // ── 縱書名牌（院名・會名）───────────────────────────────────────────────────

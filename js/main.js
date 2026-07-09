@@ -130,11 +130,15 @@ async function boot() {
   function nodeTex(d, side) {
     const a = side === 't' ? d.t : d.k;
     const lord = d.id === 'center' || d.k?.slot === 'lord' || d.t?.court === 'chudai';
+    // 尊形／三昧耶乃粉本專筆之相，數百細筆非 256 幅所能容（一指僅合 1.3px），
+    // 放大即糊——此二相升幅；種字諸相仍舊（主人指糊之修）
+    const fine = state.form === 'samaya' || state.form === 'wrath-samaya' ||
+      state.form === 'figure' || state.form.startsWith('figure-');
     return deityTexture({
       id: `${d.id}|${side}`, zh: a.zh, bija: a.bija, sid: siddham(a.bija),
       samaya: d.samaya, color: FAMILY_COLOR[d.family], form: state.form,
       chiken: state.form === 'figure' && d.id === 'center' && side === 'k',
-      res: lord ? 384 : 256, // 中尊大相，幅加倍半以求精細
+      res: lord ? (fine ? 768 : 384) : (fine ? 512 : 256), // 中尊大相，幅加倍以求精細
     });
   }
 
@@ -196,11 +200,17 @@ async function boot() {
     for (const { d, pos, display } of ns) {
       const zh = display?.zh ?? d.k.zh;
       const bija = display?.bija ?? d.k.bija;
+      const isLord = (d.k && d.k.slot === 'lord') || ns.length === 1 ||
+        (assembly.cast === 'rishu' && d.id === 'fugen');
       const tex = deityTexture({
         id: `${assembly.key}|${d.id}`, zh, bija, sid: siddham(bija),
         samaya: d.samaya, color: FAMILY_COLOR[d.family], form: assembly.form,
         // 一印會：唯一大日，智拳之印
         chiken: assembly.key === 'ichiin' && d.id === 'center',
+        // 獨尊大格（一印會）幅隨其巨；餘會格小仍舊。
+        // persist：回響之紋一繫材質終生不回柜，入常駐藏免遭 LRU 誤逐
+        res: ns.length === 1 ? 512 : isLord ? 384 : 256,
+        persist: true,
       });
       const mat = new THREE.MeshBasicMaterial({
         map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0,
@@ -211,8 +221,6 @@ async function boot() {
       group.position.copy(pos).setY(0.55);
       group.add(mesh);
       scene.add(group);
-      const isLord = (d.k && d.k.slot === 'lord') || ns.length === 1 ||
-        (assembly.cast === 'rishu' && d.id === 'fugen');
       const echo = {
         d, group, mesh, assembly, groupMul,
         zh, size: (ns.length === 1 ? 3.8 : 2.5) * assembly.scale * (isLord && ns.length > 1 ? 1.5 : 1),
