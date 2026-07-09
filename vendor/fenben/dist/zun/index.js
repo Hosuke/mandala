@@ -98,16 +98,6 @@ export const 落筆簿 = {
 };
 // 候審筆：儀軌信雖已核（字段出典俱足），**筆**未經主人過目者——
 // 陳列頁當現朱界候審，主人印可乃摘（候審之律，勿使新筆僭已核之章）
-export const 候審筆 = new Set([
-    'east|k', 'south|k', 'west|k', 'north|k',
-    'k-o|k', 'k-ai|k', 'k-ki|k',
-    'kokuzo|k', 'k-ko|k', 'k-do|k', 'k-sho|k',
-    'kannon|k', 'monju|k', 'miroku|k', 'k-go|k',
-    'k-gyo|k', 'k-gou|k', 'k-ge|k', 'k-ken|k',
-    'p-kon|k', 'p-ho|k', 'p-hou|k', 'p-katsu|k',
-    's-ko|k', 's-saku|k', 's-sa|k', 's-rei|k',
-    'g-ki|k', 'g-man|k', 'g-ka|k', 'g-bu|k',
-    'g-ko|k', 'g-ke|k', 'g-to|k', 'g-zu|k',
-    'center|t', 'east|t', 'south|t', 'west|t', 'north|t',
-    'fugen|t', 'monju|t', 'kannon|t', 'miroku|t',
-]);
+// 2026-07-09 主人全體印可，四十四鍵悉摘：自此上壇之閘唯「信」獨守——
+// 信待核者仍不得上壇，升核即出貨，毋須再審其筆。
+export const 候審筆 = new Set([]);
