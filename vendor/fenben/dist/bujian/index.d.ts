@@ -1,0 +1,12 @@
+export { 月輪, 頭光 } from './guang.js';
+export { 蓮華座 } from './zuo.js';
+export { 菩薩開臉, 點睛, 垂埵耳, 頸三道 } from './lian.js';
+export { 寶髻, 垂髮, 天髻, 五髻 } from './fa.js';
+export { 頸瓔, 胸瓔, 臂釧, 腕釧 } from './yan.js';
+export { 握拳橫, 握拳覆, 執杵手, 執鈴手, 側拳 } from './shou.js';
+export { 仰足 } from './zu.js';
+export { 五鈷杵, 五鈷鈴 } from './chiwu.js';
+export { 指鏈, 佈, 畫指, 指寬, 手勢 } from './zhi.js';
+export { 堅實心合掌, 虛心合掌, 未敷蓮合掌, 初割蓮合掌, 金剛合掌, 顯露合掌, 持水合掌, 反叉合掌, 反背互相著合掌, 橫拄指合掌, 覆手向下合掌, 覆手合掌, 仰掌橫, 覆掌橫, } from './hezhang.js';
+export { 金剛拳, 蓮華拳, 內縛, 外縛, 忿怒拳, 如來拳, 智拳印, 法界定印, 彌陀定印, 觸地印, 與願印, 施無畏印, 說法印, 期剋印, 手印目, } from './shouyin.js';
+export { 器蓮座, 杵, 羯磨杵, 立杵橫杵, 寶珠, 三弁寶珠, 函上寶珠, 開敷蓮, 慧劍, 法輪, 如意幢, 日輪, 金剛鉤, 羂索, 金剛鎖, 二利牙, 金剛舌, 笑杵, 二拳彈指, 金剛縛, 甲冑, 寶香爐, 盛華器, 寶燈, 塗香器, 華鬘, 箜篌, 寶塔, 三昧耶目, } from './sanmaya.js';

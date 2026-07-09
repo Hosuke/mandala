@@ -10,6 +10,8 @@
 // 頸底24 心窩36 臍48 陰藏60 盤線64 座面68；膝寬52（盤線至白毫之距）。
 // ─────────────────────────────────────────────────────────────────────────────
 import { 錨點, 坐像 } from './data/ryodo.js';
+import { kosareta } from './data/giki.js';
+import { 上壇之, 白描, 三昧耶白描 } from '../vendor/fenben/dist/baimiao.js';
 
 const M = 錨點(); // { 肉髻:4, 頂髮:8, 額:12(=白毫), 鼻:16, 頦:20, 頸喉:24, 心窩... }
 const 白毫 = M.白毫, 髮際 = M.頂髮, 頦 = M.頦, 頸底 = M.頸喉;
@@ -269,6 +271,21 @@ export function drawFunpon(ctx, R, face) {
 
   ctx.restore();
 }
+
+// ── 薄適配（fenben docs/回填契約.md §五）────────────────────────────────────
+// 先問粉本庫之閘（vendor/fenben，機出勿手改）：「已核＋有專筆＋非候審」三戒
+// 同持乃上壇；null 則退壇城自藏之粉本（五佛十面），再無則還 false，
+// 渲染層守佔位略相（寧缺毋誤）。
+export function 落筆(ctx, R, id, side) {
+  const 上 = 上壇之(id, side);
+  if (上) { 白描(ctx, R, 上.面, 上.鍵); return true; }
+  const fp = kosareta(id, side);
+  if (fp) { drawFunpon(ctx, R, fp); return true; }
+  return false;
+}
+
+// 三昧耶會之器（金剛界三十七尊）：有其器依粉本落筆，無則還 false 守現行示意
+export { 三昧耶白描 as 器筆 };
 
 // 是否有粉本可施：渲染層以此問訊
 export { drawFunpon as default };
