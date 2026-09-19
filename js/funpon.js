@@ -12,6 +12,7 @@
 import { 錨點, 坐像 } from './data/ryodo.js';
 import { kosareta } from './data/giki.js';
 import { 上壇之, 白描, 三昧耶白描 } from '../vendor/fenben/dist/baimiao.js';
+import { 依號 } from '../vendor/fenben/dist/yigui.js';
 
 const M = 錨點(); // { 肉髻:4, 頂髮:8, 額:12(=白毫), 鼻:16, 頦:20, 頸喉:24, 心窩... }
 const 白毫 = M.白毫, 髮際 = M.頂髮, 頦 = M.頦, 頸底 = M.頸喉;
@@ -273,9 +274,27 @@ export function drawFunpon(ctx, R, face) {
 }
 
 // ── 薄適配（fenben docs/回填契約.md §五）────────────────────────────────────
+// 紋理鍵與尊形鍵分開：降三世會的薩埵位現降三世，不能僅換題簽而沿用薩埵筆。
+export function figureIdentity(textureId) {
+  const [first, second] = textureId.split('|');
+  if (second === 't' || second === 'k') return { id: first, side: second };
+  if (!second) return null;
+  if ((first === 'gozanze' || first === 'gozanze-s') && second === 'fugen') {
+    return { id: 'gozanze', side: 'k' };
+  }
+  return { id: second, side: 'k' };
+}
+
+// 供紋理、尊牌與盤點共用；「已核」始終由粉本公開閘判定，不以同名跨界借筆。
+export function figureStatus(id, side) {
+  if (id === 'henchi' && side === 't') return 'symbol'; // 智印本為三角，非人身
+  if (上壇之(id, side) || kosareta(id, side)) return 'verified';
+  return 依號[id]?.[side] ? 'pending' : 'missing';
+}
+
 // 先問粉本庫之閘（vendor/fenben，機出勿手改）：「已核＋有專筆＋非候審」三戒
 // 同持乃上壇；null 則退壇城自藏之粉本（五佛十面），再無則還 false，
-// 渲染層守佔位略相（寧缺毋誤）。
+// 渲染層退種字（寧缺毋誤）。
 export function 落筆(ctx, R, id, side) {
   const 上 = 上壇之(id, side);
   if (上) { 白描(ctx, R, 上.面, 上.鍵); return true; }

@@ -74,7 +74,7 @@ export const ASSEMBLIES = [
     ascent: '以供養入道：奉一華一燈，即與聖眾交徹。' },
   { key: 'shiin',    zh: '四印會',   grid: [0, 0], form: 'figure', scale: 1.0,
     subset: ['center', 'fugen', 'kokuzo', 'kannon', 'k-gyo',
-             'p-kon', 'p-ho', 'p-hou', 'p-katsu'],
+             'p-kon', 'p-ho', 'p-hou', 'p-katsu', 'g-ki', 'g-man', 'g-ka', 'g-bu'],
     descent: '攝繁為簡：三十七尊收於四印，將歸於一。',
     ascent: '四印初分：一將開為萬，行者始見差別之德。' },
   { key: 'ichiin',   zh: '一印會',   grid: [1, 0], form: 'figure', scale: 1.55,

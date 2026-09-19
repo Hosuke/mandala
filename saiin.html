@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="東寺西院曼荼羅逐席待審稿：查閱兩界席位、機助判讀與出典。正式核定仍由人工。">
+  <title>西院本 · 兩界待審圖</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%23090d17' stroke='%23d8b36a'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/saiin.css">
+</head>
+<body>
+  <header class="masthead">
+    <div><a id="back-link" class="back" href="index.html">← 金胎不二</a><h1 id="page-title">西院本 · 兩界待審圖</h1></div>
+    <nav class="language" aria-label="Language"><button data-lang="zh">中</button><button data-lang="en">EN</button><button data-lang="ja">日</button></nav>
+  </header>
+  <p id="review-notice" class="review-notice">機助判讀與程序尊形草稿，逐席待人工覆核。</p>
+  <main class="workspace">
+    <section class="diagram" aria-labelledby="diagram-title">
+      <div class="diagram-bar">
+        <div class="realm-tabs" role="group" aria-label="Realm"><button id="realm-t" data-realm="t" aria-pressed="true">胎藏界</button><button id="realm-k" data-realm="k" aria-pressed="false">金剛界</button></div>
+        <span id="diagram-title">胎藏界</span><span id="seat-count"></span>
+      </div>
+      <div id="canvas-wrap"><canvas id="saiin-canvas" tabindex="0" aria-label="待審席位圖；可用方向鍵移動，加減鍵縮放，0 鍵復位。"></canvas>
+        <div class="zoom-tools" role="group" aria-label="Zoom"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-level">100%</span><button id="zoom-in" aria-label="Zoom in">+</button><button id="fit-view">全圖</button></div>
+        <p id="canvas-empty" hidden></p>
+      </div>
+      <div class="diagram-footer"><span id="interaction-hint">拖曳移圖 · 滾輪縮放 · 點席查閱</span><span id="legend">○ 尊形草稿　◇ 未辨席　· 群像席</span></div>
+    </section>
+    <aside class="review-panel" aria-label="Seat review">
+      <section id="seat-detail" class="detail" aria-live="polite">
+        <span id="detail-state" class="status">待人工覆核</span>
+        <h2 id="detail-title">逐席查閱</h2><p id="detail-intro">點選圖中席位，或由下方名錄檢索。</p><div id="detail-content"></div>
+      </section>
+      <section class="catalogue" aria-labelledby="catalogue-title">
+        <h2 id="catalogue-title">席位名錄</h2>
+        <label id="search-label" for="seat-search">尊名／席位編號</label><input id="seat-search" type="search" autocomplete="off" placeholder="檢索待審席位">
+        <div class="filter-row"><label id="location-label" for="location-filter">院／會</label><select id="location-filter"><option value="">全部</option></select></div>
+        <p id="result-count" class="muted" aria-live="polite"></p><div id="seat-list" class="seat-list"></div><button id="more-seats" class="more" hidden>繼續顯示</button>
+      </section>
+    </aside>
+  </main>
+  <footer class="page-footer"><p id="source-note">以東寺西院曼荼羅為底本。尊名、坐次與筆形各待覆核；草稿不作正式核定。</p><a id="edition-source" href="https://toji.or.jp/treasure/" target="_blank" rel="noopener noreferrer">東寺館藏</a><a id="catalogue-source" href="https://kunishitei.bunka.go.jp/heritage/detail/201/95" target="_blank" rel="noopener noreferrer">文化財編目</a></footer>
+  <script type="module" src="js/saiin-review.js"></script>
+</body>
+</html>

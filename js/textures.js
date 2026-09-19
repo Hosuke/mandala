@@ -3,7 +3,7 @@
 // 不取一張圖片資源；如曼荼羅之本義，相由法生。
 // ─────────────────────────────────────────────────────────────────────────────
 import * as THREE from '../vendor/three.module.js';
-import { 落筆, 器筆 } from './funpon.js';
+import { 落筆, 器筆, figureIdentity, figureStatus } from './funpon.js';
 
 const GOLD = '#d8b36a';
 const GOLD_DIM = '#a8854a';
@@ -771,6 +771,13 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     fn(ctx, size);
     ctx.restore();
   };
+  const drawFallback = () => {
+    if (bija) drawSeed(ctx, sid, bija, R * 0.74, R * 1.3, 0, 0);
+    else {
+      ctx.font = `500 ${R * 0.28}px "LXGW WenKai TC", serif`;
+      placeCentered(ctx, zh, 0, 0); // 名號已核、種字未核之席，不編造種字
+    }
+  };
 
   if (form === 'figure' || form.startsWith('figure-')) {
     // 大曼荼羅：尊形之略相（複合會相由此衍生）
@@ -789,15 +796,14 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     ctx.shadowBlur = 2 * k;
     if (form === 'figure-subtle') ctx.scale(0.62, 0.62);
     else if (form === 'figure-offer') { ctx.translate(0, -R * 0.07); ctx.scale(0.86, 0.86); }
-    // 粉本之閘（適配見 funpon.落筆）：先問粉本庫 vendor/fenben，次壇城自藏十面，
-    // 皆無則佔位略相（寧缺毋誤）。id 二格式：主壇「尊|側」，九會「會|尊」（九會皆金剛界之相）。
-    const done = (() => {
-      const p = id.split('|');
-      if (p[1] === 't' || p[1] === 'k') return 落筆(ctx, R, p[0], p[1]);
-      if (p.length === 2) return 落筆(ctx, R, p[1], 'k');
-      return false;
-    })();
-    if (!done) { ctx.shadowBlur = 7 * k; drawFigure(ctx, R, deityType(zh), samaya, { chiken }); }
+    const identity = figureIdentity(id);
+    const status = identity ? figureStatus(identity.id, identity.side) : 'missing';
+    if (status === 'symbol') drawIcon(R * 0.62);
+    else {
+      const done = identity && 落筆(ctx, R, identity.id, identity.side);
+      // 待核或未備專筆者退種字；不以通用二臂坐像冒充多面、多臂及不同印相。
+      if (!done) drawFallback();
+    }
     ctx.restore();
     if (form === 'figure-offer') {
       // 供養會：下捧蓮臺
@@ -812,13 +818,8 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
   } else if (form === 'samaya' || form === 'wrath-samaya') {
     // 三昧耶之閘：金剛界三十七尊之器有粉本者依粉本落筆；胎藏之器粉本未備、
     // 餘尊無其器——皆守現行示意（寧缺毋誤）。id 二格式同粉本之閘。
-    const 器鍵 = (() => {
-      const p = id.split('|');
-      if (p[1] === 'k') return p[0];
-      if (p[1] === 't') return null;
-      if (p.length === 2) return p[1];
-      return null;
-    })();
+    const identity = figureIdentity(id);
+    const 器鍵 = identity?.side === 'k' ? identity.id : null;
     let drawn = false;
     if (器鍵) {
       ctx.save();
@@ -827,7 +828,10 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
       drawn = 器筆(ctx, R, 器鍵);
       ctx.restore();
     }
-    if (!drawn) drawIcon(R * 0.62);
+    if (!drawn) {
+      if (!samaya || identity?.id === 'gozanze') drawFallback();
+      else drawIcon(R * 0.62);
+    }
   } else if (form === 'subtle') {
     // 微細：種字縮於金剛杵輪廓之中
     ctx.save();

@@ -127,10 +127,15 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   flex-direction: column;
   gap: 14px;
   max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dim) transparent;
   transition: gap .45s ease;
 }
 #controls button {
   writing-mode: vertical-rl;
+  white-space: nowrap;
   font-family: var(--cjk);
   font-size: 16px;
   letter-spacing: .3em;
@@ -414,6 +419,11 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   letter-spacing: .12em;
   color: var(--gold-dim);
   line-height: 1.8;
+}
+#info-figure {
+  color: var(--gold);
+  font-size: 12px;
+  line-height: 1.7;
 }
 #info-desc {
   margin-top: 10px;

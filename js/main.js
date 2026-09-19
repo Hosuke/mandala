@@ -23,6 +23,7 @@ import {
   FORM_I18N, TAIZO_I18N, ASM_I18N, STAGE_I18N, DESC_I18N,
 } from './data/i18n.js';
 import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture, matcapTexture } from './textures.js';
+import { figureIdentity, figureStatus } from './funpon.js';
 import { NEW_DEITIES, SANRINJIN, KODO_LAYOUT, KODO_I18N } from './data/kodo.js';
 import { gentenFor, gentenGallery } from './data/genten.js';
 import { buildSamaya } from './samaya3d.js';
@@ -50,6 +51,24 @@ const FORM_ZH = {
   offer: '供養', wrath: '忿怒', 'wrath-samaya': '忿怒三昧耶',
   figure: '尊形', 'figure-subtle': '尊住杵中',
   'figure-offer': '尊捧供養', 'figure-wrath': '忿怒尊形',
+};
+const FIGURE_NOTE = {
+  zh: { verified: '尊形：已核粉本', symbol: '本尊為一切如來智印，以三角智火表示。',
+    pending: '尊形待核，暫以種字表示。', missing: '尊形尚未備妥，暫以種字表示。' },
+  en: { verified: 'Figure: verified drawing', symbol: 'The wisdom seal is represented by a flaming triangle.',
+    pending: 'Figure awaiting verification; seed syllable shown.', missing: 'Figure not yet available; seed syllable shown.' },
+  ja: { verified: '尊形：考証済みの粉本', symbol: '一切如来智印は三角の智火で表す。',
+    pending: '尊形は考証待ち。種字を示す。', missing: '尊形は未整備。種字を示す。' },
+};
+const NAME_ONLY_NOTE = {
+  zh: '尊形與種字尚未核定，暫列尊名。',
+  en: 'Figure and seed syllable awaiting verification; name shown.',
+  ja: '尊形・種字は考証待ち。尊名を示す。',
+};
+const SAMAYA_PENDING_NOTE = {
+  zh: '三昧耶形尚未核定，暫以種字表示。',
+  en: 'Emblem awaiting verification; seed syllable shown.',
+  ja: '三昧耶形は考証待ち。種字を示す。',
 };
 const courtByKey = Object.fromEntries(COURTS.map(c => [c.key, c]));
 const PI = Math.PI;
@@ -204,7 +223,7 @@ async function boot() {
         (assembly.cast === 'rishu' && d.id === 'fugen');
       const tex = deityTexture({
         id: `${assembly.key}|${d.id}`, zh, bija, sid: siddham(bija),
-        samaya: d.samaya, color: FAMILY_COLOR[d.family], form: assembly.form,
+        samaya: d.samaya, color: FAMILY_COLOR[d.family], form: display?.form ?? assembly.form,
         // 一印會：唯一大日，智拳之印
         chiken: assembly.key === 'ichiin' && d.id === 'center',
         // 獨尊大格（一印會）幅隨其巨；餘會格小仍舊。
@@ -693,7 +712,8 @@ async function boot() {
     return sk ? `${zh} · ${sk}` : zh;
   }
 
-  function showInfo(ref) {
+  let infoSide = null;
+  function showInfo(ref, sound = true) {
     infoNode = ref;
     const { d } = ref;
     const color = '#' + FAMILY_COLOR[d.family].toString(16).padStart(6, '0');
@@ -704,9 +724,10 @@ async function boot() {
         sk: ref.display?.sk ?? d.k.sk,
         bija: ref.display?.bija ?? d.k.bija,
       };
+      const form = ref.display?.form ?? ref.assembly.form;
       loc = lang === 'en'
-        ? `${T.locK} · ${asmName(ref.assembly)} (${formVarName(ref.assembly.form)})`
-        : `${T.locK} · ${ref.assembly.zh}（${formVarName(ref.assembly.form)}）`;
+        ? `${T.locK} · ${asmName(ref.assembly)} (${formVarName(form)})`
+        : `${T.locK} · ${ref.assembly.zh}（${formVarName(form)}）`;
     } else {
       const eff = effLambda(ref);
       const side = ref.hasT && ref.hasK ? (eff < 0.5 ? 't' : 'k') : (ref.hasT ? 't' : 'k');
@@ -724,23 +745,31 @@ async function boot() {
         loc += `\n${T.dual(d.t.zh, d.k.zh)}`;
       }
     }
-    const gform = ref.kind === 'echo' ? ref.assembly.form : state.form;
-    const g = gentenFor(d.id, gside, gform);
+    const gform = ref.kind === 'echo' ? (ref.display?.form ?? ref.assembly.form) : state.form;
+    infoSide = gside;
+    const textureId = ref.kind === 'echo' ? `${ref.assembly.key}|${d.id}` : `${d.id}|${gside}`;
+    const identity = figureIdentity(textureId);
+    const isFigure = gform === 'figure' || gform.startsWith('figure-');
+    const figureNote = !aspect.bija ? NAME_ONLY_NOTE[lang]
+      : gform === 'wrath-samaya' && identity?.id === 'gozanze' ? SAMAYA_PENDING_NOTE[lang]
+      : isFigure && identity ? FIGURE_NOTE[lang][figureStatus(identity.id, identity.side)] : '';
+    const g = gentenFor(identity?.id ?? d.id, identity?.side ?? gside, gform);
     const genten = g ? {
       src: g.src,
       title: (g.title[lang] ?? g.title.zh) + (g.note ? '　' + (g.note[lang] ?? g.note.zh) : ''),
       credit: `${lang === 'en' ? 'Source' : '出典'} · ${g.institution} · ${g.license}`,
       href: g.sourceUrl,
     } : null;
+    const mantra = ref.display?.mantra ?? d.mantra;
     ui.showInfo({
       bija: siddham(aspect.bija) || aspect.bija, bijaRoman: aspect.bija,
       name: aspect.zh, sk: aspect.sk,
       family: famName(d.family), familyColor: color,
-      loc, desc: descOf(d), mantra: d.mantra, mantraSid: sidPhrase(d.mantra),
+      loc, desc: ref.display?.desc?.[lang] ?? descOf(d), mantra, mantraSid: sidPhrase(mantra), figureNote,
       genten,
     });
     ui.showCardButton(ref === bondNode); // 證卡唯結緣之尊可取
-    if (bell.ready() && !bell.isMuted()) {
+    if (sound && bell.ready() && !bell.isMuted()) {
       bell.strike(bell.FAMILY_FREQ[d.family] * (d.id === 'center' ? 0.75 : 1), { gain: 0.18 });
     }
   }
@@ -762,6 +791,11 @@ async function boot() {
     state.lambda = damp(state.lambda, state.lambdaTarget, 6.5, dt);
     if (Math.abs(state.lambda - state.lambdaTarget) < 0.004) state.lambda = state.lambdaTarget;
     ui.setRealm(state.lambda);
+    // 同體尊換界之際，尊名、種字與粉本狀態一併刷新；不重奏點尊之磬。
+    if (infoNode?.kind === 'node' && infoNode.hasT && infoNode.hasK && ui.infoOpen()) {
+      const side = effLambda(infoNode) < 0.5 ? 't' : 'k';
+      if (side !== infoSide) showInfo(infoNode, false);
+    }
     trav.update(dt);
     goso.update(dt);
     kanPulse = Math.max(0, kanPulse - dt * 0.3); // 證身之脈漸息

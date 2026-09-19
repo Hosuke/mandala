@@ -38,7 +38,10 @@ export function taizoPosition(d) {
   const i = members.indexOf(d), n = members.length;
   const r = RING_RADIUS[court.ring];
   if (court.key === 'gekongobu') {
-    return onPlane(90 - (i / n) * 360, r); // 自北起順時針環列
+    // 八方天守其方位，不以十二等分沖淡八方（e國寶《十二天像》明文）。
+    // 梵、地、日、月無平面八方之屬，僅插列於空隙作示意，非傳統方位。
+    const angle = d.t.slot < 8 ? -d.t.slot * 45 : [22.5, 112.5, 202.5, 292.5][d.t.slot - 8];
+    return onPlane(angle, r);
   }
   const [a0, a1] = court.arc;
   return onPlane(a0 + ((i + 0.5) / n) * (a1 - a0), r);
@@ -63,13 +66,14 @@ export function kongoLocal(d) {
       // 四波羅蜜：繞大日之四斜位
       return c.clone().add(onPlane(45 + k.slot * 90, ATTEND_R * 1.15));
     }
-    // 四親近：繞部主，首位面向中央
-    const toCenter = Math.atan2(c.z, -c.x) / D2R + 180; // 指向壇心之角
-    return c.clone().add(onPlane(toCenter + k.slot * 90, ATTEND_R));
+    // 四佛向壇心；四親近依「前右左背」安列（T0903），非沿圓依序旋轉。
+    const toCenter = Math.atan2(c.z, -c.x) / D2R;
+    return c.clone().add(onPlane(toCenter + [0, -90, 90, 180][k.slot], ATTEND_R));
   }
-  if (k.circle === 'inner') return onPlane(45 + k.slot * 90, MOON_R * 0.97);
-  if (k.circle === 'outer') return onPlane(45 + k.slot * 90, MOON_R * 1.62);
-  if (k.circle === 'gate') return onPlane(k.slot * 90, MOON_R * 1.78);
+  // 八供依東南、西南、西北、東北；四攝依東、南、西、北（T1065）。
+  if (k.circle === 'inner') return onPlane(-45 - k.slot * 90, MOON_R * 0.97);
+  if (k.circle === 'outer') return onPlane(-45 - k.slot * 90, MOON_R * 1.62);
+  if (k.circle === 'gate') return onPlane(-k.slot * 90, MOON_R * 1.78);
   return null;
 }
 
@@ -99,15 +103,22 @@ export function assemblyEchoes() {
     const center = cellCenter(a);
     let nodes;
     if (a.cast === 'rishu') {
-      // 理趣會：金剛薩埵為主，欲觸愛慢居四斜，四攝守門
+      // 理趣十七尊：主尊＋四金剛＋四金剛女＋內四供養＋四攝。
+      // 方位據 MIKKYO 21 理趣會明文；半徑為本引擎之拓撲展布。
       nodes = [
         { d: byId.fugen, pos: new THREE.Vector3(0, 0, 0),
           display: { zh: '金剛薩埵', bija: 'hūṃ' } },
         ...['r-yoku', 'r-soku', 'r-ai', 'r-man'].map((id, i) => ({
-          d: byId[id], pos: onPlane(45 + i * 90, MOON_R * 0.85),
+          d: byId[id], pos: onPlane(-i * 90, MOON_R * 0.85),
+        })),
+        ...['r-yoku-nyo', 'r-soku-nyo', 'r-ai-nyo', 'r-man-nyo'].map((id, i) => ({
+          d: byId[id], pos: onPlane(-45 - i * 90, MOON_R * 0.85),
+        })),
+        ...['g-ki', 'g-man', 'g-ka', 'g-bu'].map((id, i) => ({
+          d: byId[id], pos: onPlane(-45 - i * 90, MOON_R * 1.55),
         })),
         ...['s-ko', 's-saku', 's-sa', 's-rei'].map((id, i) => ({
-          d: byId[id], pos: onPlane(i * 90, MOON_R * 1.55),
+          d: byId[id], pos: onPlane(-i * 90, MOON_R * 1.55),
         })),
       ];
     } else {
@@ -117,16 +128,20 @@ export function assemblyEchoes() {
         let pos;
         if (a.subset && a.subset.length <= 1) pos = new THREE.Vector3(0, 0, 0);
         else if (a.subset) {
-          // 四印會：大日居中，四尊四方，四波羅蜜四斜
+          // 四印十三尊：五尊現尊形，四波羅蜜及內四供養現三昧耶形。
           const i = a.subset.indexOf(d.id);
           if (i === 0) pos = new THREE.Vector3(0, 0, 0);
-          else if (i <= 4) pos = onPlane((i - 1) * 90, MOON_R * 0.95);
-          else pos = onPlane(45 + (i - 5) * 90, MOON_R * 0.6);
+          else if (i <= 4) pos = onPlane(-(i - 1) * 90, MOON_R * 0.95);
+          else if (i <= 8) pos = onPlane(45 + (i - 5) * 90, MOON_R * 0.6);
+          else pos = onPlane(-45 - (i - 9) * 90, MOON_R * 1.35);
         } else pos = kongoLocal(d).clone();
-        let display = null;
+        let display = a.key === 'shiin' && a.subset.indexOf(d.id) >= 5 ? { form: 'samaya' } : null;
         if (a.key.startsWith('gozanze') && d.id === 'fugen') {
           // 金剛薩埵之教令輪身
-          display = { zh: '降三世明王', sk: 'Trailokyavijaya', bija: 'hūṃ' };
+          display = { zh: '降三世明王', sk: 'Trailokyavijaya', bija: 'hūṃ',
+            desc: { zh: '金剛薩埵之教令輪身，降伏三世之障。',
+              en: 'The wrathful manifestation of Vajrasattva, subduing the obstacles of the three worlds.',
+              ja: '金剛薩埵の教令輪身。三世の障りを降伏す。' }, mantra: '' };
         }
         return { d, pos, display };
       });

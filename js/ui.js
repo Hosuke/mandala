@@ -50,6 +50,9 @@ export function initUI(h, T0, langKey0 = 'zh') {
   $('btn-sound').addEventListener('click', () => h.onSound());
   $('btn-reset').addEventListener('click', () => h.onReset());
   $('btn-genten').addEventListener('click', () => h.onGenten());
+  $('btn-saiin').addEventListener('click', () => {
+    window.location.assign(`saiin.html?realm=${Number(lambda.value) < 500 ? 't' : 'k'}`);
+  });
   $('genten-close').addEventListener('click', () => api.closeGenten());
   $('info-close').addEventListener('click', () => api.hideInfo());
   $('info-card').addEventListener('click', () => h.onCard());
@@ -110,7 +113,7 @@ export function initUI(h, T0, langKey0 = 'zh') {
       $('hint').textContent = entered ? T.hintFP : T.hintAerial;
     },
 
-    showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra, mantraSid, genten }) {
+    showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra, mantraSid, genten, figureNote }) {
       $('info-bija').textContent = bija;
       $('info-bija').style.color = familyColor;
       $('info-bija-roman').textContent = bijaRoman && bijaRoman !== bija ? bijaRoman : '';
@@ -123,6 +126,8 @@ export function initUI(h, T0, langKey0 = 'zh') {
       fam.style.color = familyColor;
       $('info-loc').textContent = loc;
       $('info-desc').textContent = desc || '';
+      $('info-figure').textContent = figureNote || '';
+      $('info-figure').hidden = !figureNote;
       const m = $('info-mantra');
       m.textContent = mantra || '';
       m.style.display = mantra ? '' : 'none';
@@ -238,6 +243,8 @@ export function initUI(h, T0, langKey0 = 'zh') {
       curLang = langKey;
       $('btn-genten').textContent = T.gentenBtn;
       $('btn-genten').title = T.titles.genten;
+      $('btn-saiin').textContent = T.saiinBtn;
+      $('btn-saiin').title = T.saiinTitle;
       // 懸浮提示（title）亦隨語
       const TITLE_IDS = {
         descent: 'btn-descent', ascent: 'btn-ascent', form: 'btn-form',

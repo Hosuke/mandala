@@ -41,6 +41,8 @@ const UI_ZH = {
   cardFile: n => `結緣之證-${n}.png`,
   kodoBtn: '講堂',
   gentenBtn: '原典',
+  saiinBtn: '西院待審',
+  saiinTitle: '西院本：依原圖位置逐席查閱待審稿',
   gentenTitle: '原典帖 · 絹本曼荼羅之投影',
   gentenIntro: '壇上諸尊皆程序所現（零圖片資源）；此帖所陳，乃歷史絹本中之投影——以證「絹本是投影，非結構」。皆 CC0 公有領域。',
   titles: {
@@ -89,6 +91,8 @@ const UI_EN = {
   cardFile: n => `bond-${n}.png`,
   kodoBtn: 'Kōdō',
   gentenBtn: 'Genten',
+  saiinBtn: 'Saiin draft',
+  saiinTitle: 'Saiin Mandala: inspect draft seats at their image positions',
   gentenTitle: 'Genten — projections of the silk mandala',
   gentenIntro: 'Every deity in the maṇḍala is drawn procedurally (zero image assets). The leaves shown here are projections from historical silk paintings — a witness to “the silk is a projection, not the structure.” All CC0, public domain.',
   titles: {
@@ -107,6 +111,8 @@ const UI_EN = {
 };
 
 const UI_JA = {
+  saiinBtn: '西院草稿',
+  saiinTitle: '西院本：原図の位置に基づく確認待ちの席位図',
   hintAerial: 'ドラッグで旋観 · ホイールで遠近 · 尊に触れて詳らかに',
   hintFP: 'ドラッグで環顧 · WASD で壇中を行く · Esc で出壇',
   hintKan: '軽く触れて進む · 観に促しなし · Esc で出観',
@@ -350,6 +356,10 @@ export const DESC_I18N = {
     'r-soku': 'Touch as it originally is: an embrace that does not bind.',
     'r-ai': 'The bond of love is itself liberation; the makara-banner raised high.',
     'r-man': 'Great pride as the great self: lofty, yet bowing to all things.',
+    'r-yoku-nyo': 'One of the four female Vajra deities of the Rishu Assembly, seated in the southeast.',
+    'r-soku-nyo': 'One of the four female Vajra deities of the Rishu Assembly, seated in the southwest.',
+    'r-ai-nyo': 'One of the four female Vajra deities of the Rishu Assembly, seated in the northwest.',
+    'r-man-nyo': 'One of the four female Vajra deities of the Rishu Assembly, seated in the northeast.',
     henchi: 'The triangle of wisdom-fire: the seal from which all buddhas are born.',
     butsugen: 'The eye that gives birth to buddhas; mother of omniscience.',
     shichikutei: 'Cundī, the mother proclaimed by seventy million buddhas.',
@@ -435,6 +445,10 @@ export const DESC_I18N = {
     'r-soku': '触の本然、抱きて縛らず。',
     'r-ai': '愛縛すなわち解脱、摩竭の幢高く掲ぐ。',
     'r-man': '大慢すなわち大我、傲然として万物を礼す。',
+    'r-yoku-nyo': '理趣会の四金剛女の一尊。東南隅に座す。',
+    'r-soku-nyo': '理趣会の四金剛女の一尊。西南隅に座す。',
+    'r-ai-nyo': '理趣会の四金剛女の一尊。西北隅に座す。',
+    'r-man-nyo': '理趣会の四金剛女の一尊。東北隅に座す。',
     henchi: '三角の智火の印——諸仏能生の智。',
     butsugen: '諸仏を生む眼、遍知の母。',
     shichikutei: '准胝、七倶胝の仏の共に説きし母。',

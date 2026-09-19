@@ -190,6 +190,22 @@ export const DEITIES = [
     k: { zh: '慢金剛', sk: 'Mānavajra', bija: 'hūṃ' },
     desc: '理趣：大慢即大我，傲然而禮萬物。' },
 
+  // 理趣會四金剛女：名號與東南／西南／西北／東北席位據 MIKKYO 21 理趣會文字。
+  // https://www.mikkyo21f.gr.jp/mandala/mandala_kongoukai/07.html
+  // 種字、梵名、標幟與專筆尚未核定；留空而顯尊名，不借四金剛之種字冒充。
+  { id: 'r-yoku-nyo', family: 'kongo', samaya: null, rishuOnly: true, bijaPending: true,
+    k: { zh: '欲金剛女', sk: '', bija: '' },
+    desc: '理趣會四金剛女之一，居東南隅。' },
+  { id: 'r-soku-nyo', family: 'kongo', samaya: null, rishuOnly: true, bijaPending: true,
+    k: { zh: '觸金剛女', sk: '', bija: '' },
+    desc: '理趣會四金剛女之一，居西南隅。' },
+  { id: 'r-ai-nyo', family: 'kongo', samaya: null, rishuOnly: true, bijaPending: true,
+    k: { zh: '愛金剛女', sk: '', bija: '' },
+    desc: '理趣會四金剛女之一，居西北隅。' },
+  { id: 'r-man-nyo', family: 'kongo', samaya: null, rishuOnly: true, bijaPending: true,
+    k: { zh: '慢金剛女', sk: '', bija: '' },
+    desc: '理趣會四金剛女之一，居東北隅。' },
+
   // ═══ 胎藏 · 遍知院 ═════════════════════════════════════════════════════════
   { id: 'henchi', family: 'butsu', samaya: 'flame-tri',
     t: { zh: '一切如來智印', sk: 'Sarvatathāgata-jñānamudrā', bija: 'aṃ', court: 'henchi', slot: 0 },
