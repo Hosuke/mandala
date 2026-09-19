@@ -37,6 +37,12 @@ export function taizoPosition(d) {
   const members = courtMembers[d.t.court];
   const i = members.indexOf(d), n = members.length;
   const r = RING_RADIUS[court.ring];
+  if (court.key === 'jimyo') {
+    // 上冊 p151：持明院在中台西側，北→南為勝三世、大威德、般若、降三世、不動。
+    // 演示版保留原代表尊；五席全圖見 book-taizo-inner。
+    const row = { daiitoku: 1, hannya: 2, 'gozanze-t': 3, fudo: 4 }[d.id];
+    return new THREE.Vector3(-r, 0, (row - 2) * 3.6);
+  }
   if (court.key === 'gekongobu') {
     // 八方天守其方位，不以十二等分沖淡八方（e國寶《十二天像》明文）。
     // 梵、地、日、月無平面八方之屬，僅插列於空隙作示意，非傳統方位。
@@ -63,8 +69,8 @@ export function kongoLocal(d) {
     const c = MOON_CENTER[k.circle];
     if (k.slot === 'lord') return c.clone();
     if (k.circle === 'center') {
-      // 四波羅蜜：繞大日之四斜位
-      return c.clone().add(onPlane(45 + k.slot * 90, ATTEND_R * 1.15));
+      // 上冊 p342：金剛、寶、法、羯磨波羅蜜依東、南、西、北四正。
+      return c.clone().add(onPlane(-k.slot * 90, ATTEND_R * 1.15));
     }
     // 四佛向壇心；四親近依「前右左背」安列（T0903），非沿圓依序旋轉。
     const toCenter = Math.atan2(c.z, -c.x) / D2R;
@@ -132,7 +138,8 @@ export function assemblyEchoes() {
           const i = a.subset.indexOf(d.id);
           if (i === 0) pos = new THREE.Vector3(0, 0, 0);
           else if (i <= 4) pos = onPlane(-(i - 1) * 90, MOON_R * 0.95);
-          else if (i <= 8) pos = onPlane(45 + (i - 5) * 90, MOON_R * 0.6);
+          // 下冊 p451：本會四波羅蜜依東南、西南、西北、東北四隅。
+          else if (i <= 8) pos = onPlane(-45 - (i - 5) * 90, MOON_R * 0.6);
           else pos = onPlane(-45 - (i - 9) * 90, MOON_R * 1.35);
         } else pos = kongoLocal(d).clone();
         let display = a.key === 'shiin' && a.subset.indexOf(d.id) >= 5 ? { form: 'samaya' } : null;

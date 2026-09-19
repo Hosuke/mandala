@@ -1,124 +1,46 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>金胎不二 · 兩部曼荼羅引擎</title>
-  <meta name="description" content="大悲胎藏與金剛界：同一規範圖之兩種投影。形變即不二，遍歷即上下轉，入壇即羯磨，投花即結緣。">
-  <meta property="og:title" content="金胎不二 · 兩部曼荼羅引擎">
-  <meta property="og:description" content="同一規範圖之兩種投影：胎藏放射與金剛九宮。形變即不二，遍歷即上下轉，入壇即羯磨，投花即結緣。">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://hosuke.github.io/mandala/">
-  <meta property="og:image" content="https://hosuke.github.io/mandala/assets/og.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23070a13'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23d8b36a' stroke-width='2.5'/%3E%3Ccircle cx='32' cy='32' r='14.5' fill='none' stroke='%23d8b36a' stroke-width='1' opacity='.55'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23d8b36a'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=LXGW+WenKai+TC&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="依《曼荼羅之研究》上下冊校正的兩界現圖。逐尊查閱胎藏各院、金剛九會的尊名、形相、坐次及書頁出典。">
+  <title>金胎不二 · 兩界現圖</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%23090d17' stroke='%23d8b36a'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/saiin.css">
 </head>
-<body>
-  <canvas id="gl"></canvas>
-
-  <div id="frame"></div>
-  <div id="grain"></div>
-
-  <header id="title">
-    <h1>金胎不二</h1>
-    <p>兩部曼荼羅引擎</p>
+<body data-edition="book">
+  <header class="masthead">
+    <div><a id="back-link" class="back" href="engine.html">形變演示 →</a><h1 id="page-title">金胎不二 · 兩界現圖</h1></div>
+    <nav class="language" aria-label="Language"><button data-lang="zh">中</button><button data-lang="en">EN</button><button data-lang="ja">日</button></nav>
   </header>
-
-  <div id="realm">
-    <span id="realm-name">大悲胎藏</span>
-    <span id="realm-sub">GARBHADHĀTU</span>
-    <button id="bond-line" class="hidden"></button>
-    <div id="langs">
-      <button data-lang="zh" class="active">中</button>
-      <button data-lang="en">EN</button>
-      <button data-lang="ja">日</button>
-    </div>
-  </div>
-
-  <nav id="controls">
-    <button id="btn-fold" title="法具欄：收展諸鈕">收</button>
-    <button id="btn-descent" title="下轉門：佛成為世界之路">下轉</button>
-    <button id="btn-ascent" title="上轉門：眾生成佛之路">上轉</button>
-    <button id="btn-form" title="轉相：法曼荼羅（種字）→ 三昧耶曼荼羅（標幟）→ 大曼荼羅（尊形）">種字</button>
-    <button id="btn-enter" title="入壇：法曼荼羅轉為羯磨曼荼羅">入壇</button>
-    <button id="btn-toss" title="投花得佛：閉目擲花，花落何尊，即與何尊結緣">投花</button>
-    <button id="btn-kan" title="五相成身觀：坐於壇心，觀心月輪。輕觸以進">觀法</button>
-    <button id="btn-kodo" title="羯磨壇：東寺講堂二十一尊，三輪身之陣">講堂</button>
-    <button id="btn-genten" title="原典帖：歷史絹本之投影（CC0 公有領域）">原典</button>
-    <button id="btn-saiin" title="西院本：依原圖位置逐席查閱待審稿">西院待審</button>
-    <button id="btn-sound" title="磬音：點尊一磬，五部各韻">默</button>
-    <button id="btn-reset" title="復觀：還於俯瞰">復觀</button>
-  </nav>
-
-  <div id="veil"><span id="veil-text"></span></div>
-  <div id="flash"></div>
-
-  <!-- 原典帖 · 歷史絹本之投影（CC0）。壇城仍零圖片；此帖獨立於外，為投影對照。 -->
-  <div id="genten-view" class="hidden" role="dialog" aria-modal="true" aria-labelledby="genten-h">
-    <button id="genten-close" aria-label="閉">×</button>
-    <header>
-      <h2 id="genten-h"></h2>
-      <p id="genten-intro"></p>
-    </header>
-    <div id="genten-grid"></div>
-  </div>
-
-  <div id="caption" class="hidden">
-    <div id="caption-head"></div>
-    <h2 id="caption-title"></h2>
-    <p id="caption-text"></p>
-  </div>
-
-  <div id="slider-wrap">
-    <span class="end">胎藏</span>
-    <div class="slider-track">
-      <span class="mid">不二</span>
-      <input id="lambda" type="range" min="0" max="1000" value="0" aria-label="兩部之間">
-    </div>
-    <span class="end">金剛</span>
-  </div>
-
-  <div id="hint">拖曳旋觀 · 滾輪遠近 · 點尊得詳</div>
-
-  <aside id="info" class="hidden">
-    <button id="info-close" aria-label="閉">×</button>
-    <div id="info-bija"></div>
-    <div id="info-bija-roman"></div>
-    <h2 id="info-name"></h2>
-    <p id="info-sk"></p>
-    <span id="info-family"></span>
-    <p id="info-loc"></p>
-    <p id="info-desc"></p>
-    <p id="info-figure" hidden></p>
-    <p id="info-mantra-sid"></p>
-    <p id="info-mantra"></p>
-    <figure id="info-genten" class="hidden">
-      <a id="info-genten-link" target="_blank" rel="noopener">
-        <img id="info-genten-img" alt="">
-      </a>
-      <figcaption>
-        <span id="info-genten-title"></span>
-        <a id="info-genten-credit" target="_blank" rel="noopener"></a>
-      </figcaption>
-    </figure>
-    <button id="info-card" class="hidden">結緣之證 ↓</button>
-  </aside>
-
-  <div id="tooltip" class="hidden"></div>
-
-  <div id="loading">
-    <div class="seed">金胎不二</div>
-    <div class="sub">RYŌBU MAṆḌALA</div>
-  </div>
-
-  <noscript style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#d8b36a;background:#060912;">
-    此壇城需 JavaScript 而現。
-  </noscript>
-
-  <script type="module" src="js/main.js"></script>
+  <p id="review-notice" class="review-notice">依《曼荼羅之研究》上下冊校正。點選尊位可查尊名、形相與書頁出典。</p>
+  <main class="workspace">
+    <section class="diagram" aria-labelledby="diagram-title">
+      <div class="diagram-bar">
+        <div class="realm-tabs" role="group" aria-label="Realm"><button id="realm-t" data-realm="t" aria-pressed="true">胎藏界</button><button id="realm-k" data-realm="k" aria-pressed="false">金剛界</button></div>
+        <span id="diagram-title">胎藏界</span><span id="seat-count"></span>
+      </div>
+      <div id="canvas-wrap"><canvas id="saiin-canvas" tabindex="0" aria-label="兩界現圖；方向鍵移動，加減鍵縮放，0 鍵復位。"></canvas>
+        <div class="zoom-tools" role="group" aria-label="Zoom"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-level">100%</span><button id="zoom-in" aria-label="Zoom in">+</button><button id="fit-view">全圖</button></div>
+        <p id="canvas-empty" hidden></p>
+      </div>
+      <div class="diagram-footer"><span id="interaction-hint">拖曳移圖 · 滾輪縮放 · 點席查閱</span><span id="legend">尊形 · 標幟 · 點選查出典</span></div>
+    </section>
+    <aside class="review-panel" aria-label="Deity catalogue">
+      <section id="seat-detail" class="detail" aria-live="polite">
+        <span id="detail-state" class="status">書據已核對</span>
+        <h2 id="detail-title">逐尊查閱</h2><p id="detail-intro">點選圖中尊位，或依院會、尊名檢索。</p><div id="detail-content"></div>
+      </section>
+      <section class="catalogue" aria-labelledby="catalogue-title">
+        <h2 id="catalogue-title">諸尊名錄</h2>
+        <label id="search-label" for="seat-search">尊名／席位編號</label><input id="seat-search" type="search" autocomplete="off" placeholder="檢索尊名、院會或書頁">
+        <div class="filter-row"><label id="location-label" for="location-filter">院／會</label><select id="location-filter"><option value="">全部</option></select></div>
+        <p id="result-count" class="muted" aria-live="polite"></p><div id="seat-list" class="seat-list"></div><button id="more-seats" class="more" hidden>繼續顯示</button>
+      </section>
+    </aside>
+  </main>
+  <footer class="page-footer"><p id="source-note">栂尾祥雲原著、吳信如主編《曼荼羅之研究》，中國藏學出版社，2011 年 6 月。</p><a id="edition-source" href="docs/依書校正.md">校正記錄</a><a id="catalogue-source" href="saiin.html">西院照片初錄</a></footer>
+  <noscript>此現圖需啟用 JavaScript，書頁依據亦可參閱校正記錄。</noscript>
+  <script type="module" src="js/saiin-review.js"></script>
 </body>
 </html>

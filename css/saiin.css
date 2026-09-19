@@ -288,6 +288,27 @@ h2 {
   font-size:.77rem;
 }
 
+.figure-preview {
+  display:block;
+  width:100%;
+  max-height:240px;
+  object-fit:contain;
+  margin:8px auto 14px;
+  background:radial-gradient(ellipse,#23243490,transparent 70%);
+}
+
+body[data-edition=book] .review-notice {
+  color:#b9d3c8;
+  background:#14221f;
+  border-color:#344b43;
+}
+
+body[data-edition=book] .status {
+  color:#bed7c7;
+  background:#1b3028;
+  border-color:#3d5f4e;
+}
+
 .catalogue {
   padding:18px 16px 22px;
 }

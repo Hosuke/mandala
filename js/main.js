@@ -24,6 +24,7 @@ import {
 } from './data/i18n.js';
 import { deityTexture, labelTexture, glowTexture, ringTexture, petalTexture, matcapTexture } from './textures.js';
 import { figureIdentity, figureStatus } from './funpon.js';
+import { bookSeatForTexture, bookSymbolForTexture, bookCitation } from './data/book-catalog.js';
 import { NEW_DEITIES, SANRINJIN, KODO_LAYOUT, KODO_I18N } from './data/kodo.js';
 import { gentenFor, gentenGallery } from './data/genten.js';
 import { buildSamaya } from './samaya3d.js';
@@ -750,7 +751,10 @@ async function boot() {
     const textureId = ref.kind === 'echo' ? `${ref.assembly.key}|${d.id}` : `${d.id}|${gside}`;
     const identity = figureIdentity(textureId);
     const isFigure = gform === 'figure' || gform.startsWith('figure-');
-    const figureNote = !aspect.bija ? NAME_ONLY_NOTE[lang]
+    const isSymbol = gform === 'samaya' || gform === 'wrath-samaya';
+    const bookSeat = isSymbol ? bookSymbolForTexture(textureId) : bookSeatForTexture(textureId);
+    const figureNote = (isFigure || isSymbol) && bookSeat ? bookCitation(bookSeat)
+      : !aspect.bija ? NAME_ONLY_NOTE[lang]
       : gform === 'wrath-samaya' && identity?.id === 'gozanze' ? SAMAYA_PENDING_NOTE[lang]
       : isFigure && identity ? FIGURE_NOTE[lang][figureStatus(identity.id, identity.side)] : '';
     const g = gentenFor(identity?.id ?? d.id, identity?.side ?? gside, gform);
@@ -763,9 +767,9 @@ async function boot() {
     const mantra = ref.display?.mantra ?? d.mantra;
     ui.showInfo({
       bija: siddham(aspect.bija) || aspect.bija, bijaRoman: aspect.bija,
-      name: aspect.zh, sk: aspect.sk,
+      name: bookSeat?.name ?? aspect.zh, sk: aspect.sk,
       family: famName(d.family), familyColor: color,
-      loc, desc: ref.display?.desc?.[lang] ?? descOf(d), mantra, mantraSid: sidPhrase(mantra), figureNote,
+      loc, desc: bookSeat?.note || ref.display?.desc?.[lang] || descOf(d), mantra, mantraSid: sidPhrase(mantra), figureNote,
       genten,
     });
     ui.showCardButton(ref === bondNode); // 證卡唯結緣之尊可取
@@ -1073,6 +1077,7 @@ function makeTaizoDecor() {
     if (c.key === 'chudai') continue;
     let angle, r;
     if (c.key === 'gekongobu') { angle = 99; r = RING_RADIUS[4] + 3.4; }
+    else if (c.key === 'jimyo') { angle = 180; r = RING_RADIUS[c.ring] + 3.2; }
     else {
       angle = (c.arc[0] + c.arc[1]) / 2;
       r = RING_RADIUS[c.ring] + 3.2;

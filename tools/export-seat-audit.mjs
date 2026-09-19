@@ -2,7 +2,7 @@
 // Export current engine occurrences for human review; this is not a complete Saiin roster.
 import assert from 'node:assert/strict';
 import { DEITIES } from '../js/data/deities.js';
-import { MANDALA_EDITION } from '../js/data/edition.js';
+import { SAIIN_EDITION as MANDALA_EDITION } from '../js/data/edition.js';
 import {
   BASE37, COURTS, ASSEMBLIES, taizoPosition, kongoLocal, cellCenter, assemblyEchoes,
 } from '../js/layout.js';

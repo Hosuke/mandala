@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { TAIZO_SEATS } from '../js/data/saiin-taizo.js';
 import { KONGO_SEATS } from '../js/data/saiin-kongo.js';
-import { MANDALA_EDITION } from '../js/data/edition.js';
+import { SAIIN_EDITION as MANDALA_EDITION } from '../js/data/edition.js';
 import { byId } from '../js/data/deities.js';
 import { drawSaiinSeat } from '../js/saiin-drawing.js';
 

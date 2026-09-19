@@ -1,10 +1,15 @@
-// 西院本待審圖：圖本席位獨立於 canonical deity；畫布只收程序筆，不收參照圖片。
+// 依書現圖／西院初錄：席位獨立於 canonical deity；畫布只收程序筆，不收參照圖片。
 import { TAIZO_SEATS } from './data/saiin-taizo.js';
 import { KONGO_SEATS } from './data/saiin-kongo.js';
-import { MANDALA_EDITION } from './data/edition.js';
+import { MANDALA_EDITION, SAIIN_EDITION } from './data/edition.js';
+import { BOOK_SEATS, bookCitation } from './data/book-catalog.js';
+import { BOOK_KONGO_ORNAMENTS } from './data/book-kongo.js';
+import { drawBookSeat, drawBookAttribute } from './book-drawing.js';
 import { COURTS, ASSEMBLIES } from './data/courts.js';
 import { COURT_EN, ASM_EN } from './data/i18n.js';
 import { drawSaiinSeat } from './saiin-drawing.js';
+
+const bookMode = document.body.dataset.edition === 'book';
 
 const TEXT = {
   zh: { title: '西院本 · 兩界待審圖', back: '← 金胎不二', notice: '機助判讀與程序尊形草稿，逐席待人工覆核。群像區尚未逐尊展開。',
@@ -52,7 +57,40 @@ const OBSERVATION_LABELS = {
   en: { buddha: 'Buddha figure', bodhisattva: 'Bodhisattva figure', wrath: 'Wrathful figure', deva: 'Deva figure', symbol: 'Emblem', group: 'Group', unknown: 'Unidentified', seated: 'Seated', standing: 'Standing', reclining: 'Reclining' },
   ja: { buddha: '仏形', bodhisattva: '菩薩形', wrath: '忿怒形', deva: '天部形', symbol: '標幟', group: '群像', unknown: '未同定', seated: '坐姿', standing: '立姿', reclining: '臥姿' },
 };
-const ALL = { t: TAIZO_SEATS, k: KONGO_SEATS };
+Object.assign(OBSERVATION_LABELS.zh, { monk: '僧相', flying: '飛行', 'half-body': '半身承托' });
+Object.assign(OBSERVATION_LABELS.en, { monk: 'Monastic figure', flying: 'Flying', 'half-body': 'Supporting half-figure' });
+Object.assign(OBSERVATION_LABELS.ja, { monk: '僧形', flying: '飛行', 'half-body': '半身で支える像' });
+const BOOK_TEXT = {
+  zh: { title: '金胎不二 · 兩界現圖', back: '形變演示 →', notice: '依《曼荼羅之研究》上下冊校正。點選尊位可查尊名、形相與書頁出典。',
+    pending: '書據已核對', 'text-attested': '書載名位', legend: '尊形 · 標幟 · 點選查出典',
+    sourceNote: '栂尾祥雲原著、吳信如主編《曼荼羅之研究》，中國藏學出版社，2011 年 6 月。各席保留書據；程序造像的正式核定仍由人工。',
+    temple: '校正記錄', catalogueSource: '西院照片初錄', coords: '圖式位置', observations: '依所列書頁校對；同名異院、異會分席記錄。',
+    drawingPending: '依本席書載形相繪製。', partialDrawing: '僅繪已明部分；面臂或姿態缺項見下方記錄。', noDrawing: '本席先列書載名號；現有書圖未能確辨尊容。',
+    placeholder: '檢索尊名、院會或書頁', counts: n => `書式席位 ${n}`, results: (n, g, shown) => `符合 ${n} 席；顯示 ${shown} 項`,
+    source: '書頁出典', pdf: 'PDF 頁', right: '尊之右手', left: '尊之左手', mudra: '印相', color: '身色', mount: '乘座', alternative: '書內異說',
+    drawing: '程序造像', detail: '逐尊查閱', catalogue: '諸尊名錄', intro: '點選圖中尊位，或依院會、尊名檢索。',
+  },
+  en: { title: 'Ryōbu Mandala · Sourced Diagram', back: 'Morphing study →', notice: 'Revised against The Study of Mandalas, Chinese edition, 2011. Select a seat for its identity, form and book references.',
+    pending: 'Book references checked', 'text-attested': 'Book-attested', legend: 'Figures · Emblems · Select for sources',
+    sourceNote: 'Toganoo Shōun, edited by Wu Xinru, The Study of Mandalas, China Tibetology Press, June 2011. Per-seat sources are recorded; procedural drawings retain a separate human iconographic approval stage.',
+    temple: 'Revision record', catalogueSource: 'Saiin photo inventory', coords: 'Diagram position', observations: 'Checked against the cited pages. Repeated deities retain distinct seats.',
+    drawingPending: 'Procedural drawing from the cited attributes.', partialDrawing: 'Only established features are drawn; unresolved anatomy is recorded below.', noDrawing: 'Book-attested name; the available plates do not resolve the figure.',
+    placeholder: 'Search names, locations or pages', counts: n => `${n} book-diagram seats`, results: (n, g, shown) => `${n} matches; showing ${shown}`,
+    source: 'Book reference', pdf: 'PDF page', right: 'Deity’s right', left: 'Deity’s left', mudra: 'Gesture', color: 'Body colour', mount: 'Mount', alternative: 'Source variants',
+    drawing: 'Drawing', detail: 'Inspect a deity', catalogue: 'Deity catalogue', intro: 'Select a seat or search by name or assembly.',
+  },
+  ja: { title: '金胎不二 · 両界現図', back: '形変の展示 →', notice: '『曼荼羅之研究』上下巻（2011年中国語版）により校正。尊位を選ぶと尊名・形相・出典頁を確認できます。',
+    pending: '書籍の根拠を照合済み', 'text-attested': '書載の名位', legend: '尊形 · 標幟 · 選択して出典を確認',
+    sourceNote: '栂尾祥雲原著・呉信如主編『曼荼羅之研究』、中国蔵学出版社、2011年6月。各席に書籍の根拠を記録。描画の正式な図像学的確定は別途、人が行います。',
+    temple: '校正記録', catalogueSource: '西院写真の初録', coords: '図式の位置', observations: '記載の書籍頁と照合。同名でも院・会が違う尊は別席として記録。',
+    drawingPending: '本席の記述に基づく描画。', partialDrawing: '確認できた形のみ描画。面臂・姿態の未詳箇所は下記に記録。', noDrawing: '書載の尊名を表示。手元の図版では尊容を確定できません。',
+    placeholder: '尊名・院会・書籍頁を検索', counts: n => `書式の席位 ${n}`, results: (n, g, shown) => `該当 ${n} 席；${shown} 件表示`,
+    source: '書籍の出典', pdf: 'PDF頁', right: '尊の右手', left: '尊の左手', mudra: '印相', color: '身色', mount: '乗座', alternative: '書内の異説',
+    drawing: '描画', detail: '諸尊を確認', catalogue: '諸尊目録', intro: '尊位を選ぶか、院会・尊名で検索してください。',
+  },
+};
+if (bookMode) for (const lang of Object.keys(TEXT)) Object.assign(TEXT[lang], BOOK_TEXT[lang]);
+const ALL = bookMode ? BOOK_SEATS : { t: TAIZO_SEATS, k: KONGO_SEATS };
 const $ = id => document.getElementById(id);
 let lang = 'zh';
 try { lang = localStorage.getItem('mandala-lang') || 'zh'; } catch { /* localStorage optional */ }
@@ -70,11 +108,45 @@ const observationLabel = value => OBSERVATION_LABELS[lang][value] || value;
 const isGroup = seat => seat.identityStatus === 'group';
 const counts = seats => [seats.filter(s => !isGroup(s)).length, seats.filter(isGroup).length];
 const currentLabel = seat => seat.name || text().blank;
-const searchText = seat => [seat.name, seat.seatId, seat.canonicalId, groupOf(seat), seat.note].filter(Boolean).join(' ').toLocaleLowerCase();
+const searchText = seat => [seat.name, seat.seatId, seat.canonicalId, groupOf(seat), seat.note, bookMode && bookCitation(seat)].filter(Boolean).join(' ').toLocaleLowerCase();
 const baseScale = () => Math.max(1, Math.min((width - 46) / IMAGE_RATIO[realm], height - 76));
 const point = seat => ({ x: width / 2 + panX + (seat.u - 0.5) * IMAGE_RATIO[realm] * baseScale() * zoom,
   y: height / 2 + panY + (seat.v - 0.5) * baseScale() * zoom });
 const dimensions = seat => ({ w: seat.w * IMAGE_RATIO[realm] * baseScale() * zoom, h: seat.h * baseScale() * zoom });
+
+function drawBookFrame(left, top, iw, scale) {
+  ctx.save(); ctx.strokeStyle = '#a385493d'; ctx.fillStyle = '#cdb683'; ctx.lineWidth = .8;
+  const groups = new Map();
+  for (const s of ALL[realm]) {
+    const key = groupOf(s); if (key === 'gekongobu') continue;
+    if (!groups.has(key)) groups.set(key, []); groups.get(key).push(s);
+  }
+  for (const [key, seats] of groups) {
+    let l, r, t, b;
+    if (realm === 'k') {
+      const a = ASSEMBLIES.find(a => a.key === key); if (!a) continue;
+      l = a.grid[0] / 3 + .008; r = (a.grid[0] + 1) / 3 - .008;
+      t = a.grid[1] / 3 + .008; b = (a.grid[1] + 1) / 3 - .008;
+    } else {
+      l = Math.min(...seats.map(s => s.u - s.w / 2)) - .006;
+      r = Math.max(...seats.map(s => s.u + s.w / 2)) + .006;
+      t = Math.min(...seats.map(s => s.v - s.h / 2)) - .006;
+      b = Math.max(...seats.map(s => s.v + s.h / 2)) + .006;
+    }
+    ctx.strokeRect(left + l * iw, top + t * scale, (r - l) * iw, (b - t) * scale);
+    ctx.font = `${Math.max(9, Math.min(13, 10 * zoom))}px serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(locationLabel(key), left + l * iw + 5, top + t * scale + 3);
+  }
+  if (realm === 'k') for (const ornament of BOOK_KONGO_ORNAMENTS) {
+    ctx.save(); ctx.translate(left + ornament.u * iw, top + ornament.v * scale);
+    drawBookAttribute(ctx, ornament.attributes[0], 0, 0, scale * .009);
+    ctx.restore();
+  }
+  ctx.font = '11px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const dirs = realm === 't' ? ['東', '南', '西', '北'] : ['西', '北', '東', '南'];
+  [[left + iw / 2, top - 13], [left + iw + 13, top + scale / 2], [left + iw / 2, top + scale + 13], [left - 13, top + scale / 2]].forEach(([x, y], i) => ctx.fillText(dirs[i], x, y));
+  ctx.restore();
+}
 
 function requestDraw() {
   if (frameQueued) return;
@@ -90,6 +162,7 @@ function draw() {
   const left = width / 2 + panX - iw / 2, top = height / 2 + panY - scale / 2;
   ctx.strokeStyle = '#8e754b'; ctx.lineWidth = 1;
   ctx.fillStyle = '#0b101bcc'; ctx.fillRect(left, top, iw, scale); ctx.strokeRect(left, top, iw, scale);
+  if (bookMode) drawBookFrame(left, top, iw, scale);
   // 群像只框出參照圖區域，不用重複的假佛像推算尊数。
   const ordered = [...filtered.filter(isGroup), ...filtered.filter(s => !isGroup(s))];
   for (const seat of ordered) {
@@ -109,7 +182,7 @@ function draw() {
         ctx.globalAlpha = seat.identityStatus === 'unidentified' ? 0.5 : 0.85;
         ctx.beginPath(); ctx.arc(0, 0, Math.max(1, radius * 0.65), 0, Math.PI * 2); ctx.fill();
       } else {
-        const result = drawSaiinSeat(ctx, seat, radius);
+        const result = bookMode ? drawBookSeat(ctx, seat, radius * 1.15) : drawSaiinSeat(ctx, seat, radius);
         if (result) drawingNotes.set(seat.seatId, result);
       }
       if (selected?.seatId === seat.seatId) {
@@ -139,9 +212,22 @@ function updateDetail() {
   const observation = s.observation || {};
   const attributes = (observation.attributes || []).map(a => typeof a === 'string' ? a : a?.note || a?.name || a?.kind);
   add(t.kind, [observationLabel(observation.kind), observationLabel(observation.pose), ...attributes].filter(Boolean).join(' · '));
-  if (!isGroup(s)) add(t.limbs, `${observation.heads ?? '?'} / ${observation.arms ?? '?'}`);
+  const visibleHeads = observation.visibleHeads ? (lang === 'en' ? `${observation.visibleHeads} visible` : lang === 'ja' ? `可視 ${observation.visibleHeads}` : `可見 ${observation.visibleHeads}`) : '?';
+  if (!isGroup(s)) add(t.limbs, `${observation.heads ?? visibleHeads} / ${observation.arms ?? '?'}`);
   const drawing = drawingNotes.get(s.seatId);
-  add(t.drawing, isGroup(s) ? t.groupNote : (drawing?.note || (s.identityStatus === 'unidentified' ? t.noDrawing : t.drawingPending)));
+  add(t.drawing, bookMode ? (drawing?.kind === 'name' ? t.noDrawing : drawing?.kind === 'partial' ? t.partialDrawing : t.drawingPending) : (isGroup(s) ? t.groupNote : (drawing?.note || (s.identityStatus === 'unidentified' ? t.noDrawing : t.drawingPending))));
+  if (bookMode) {
+    add(t.source, bookCitation(s));
+    if (s.source?.pdfPage) add(t.pdf, String(s.source.pdfPage));
+    const referenceText = source => source ? `${source.volume || s.source.volume} · ${source.page ? `p${source.page}` : source.plate || ''} · PDF ${source.pdfPage ?? '—'}` : '';
+    if (s.layoutSource) add(lang === 'en' ? 'Position source' : lang === 'ja' ? '坐次の出典' : '坐次書據', referenceText(s.layoutSource));
+    if (s.iconographySource) add(lang === 'en' ? 'Form source' : lang === 'ja' ? '形相の出典' : '形相書據', referenceText(s.iconographySource));
+    if (s.figureSource) add(lang === 'en' ? 'Figure plate' : lang === 'ja' ? '尊容図' : '尊容圖頁', referenceText(s.figureSource));
+    const plates = [...new Set([...(s.visualSources || []), ...(s.additionalIconographySources || [])].map(referenceText))];
+    if (plates.length) add(lang === 'en' ? 'Colour plates' : lang === 'ja' ? '巻頭図版' : '卷首圖版', plates.join('；'));
+    for (const [key, label] of [['rightHand', t.right], ['leftHand', t.left], ['mudra', t.mudra], ['color', t.color], ['mount', t.mount]]) if (observation[key]) add(label, String(observation[key]));
+    if (s.alternativeNames) add(t.alternative, Array.isArray(s.alternativeNames) ? s.alternativeNames.join('、') : String(s.alternativeNames));
+  }
   $('detail-content').append(dl);
   if (s.note) {
     const note = document.createElement('p'); note.className = 'seat-note'; note.textContent = s.note; $('detail-content').append(note);
@@ -152,6 +238,11 @@ function updateDetail() {
     const a = document.createElement('a'); a.href = source; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = t.imageSource; links.append(a);
   }
   $('detail-content').append(links);
+  if (bookMode) {
+    const preview = document.createElement('canvas'); preview.width = 440; preview.height = 400; preview.className = 'figure-preview';
+    preview.setAttribute('aria-label', s.name); const pc = preview.getContext('2d'); pc.translate(220, 190);
+    drawBookSeat(pc, s, 165); $('detail-content').prepend(preview);
+  }
 }
 
 function selectSeat(seat, focus = false) {
@@ -165,6 +256,7 @@ function selectSeat(seat, focus = false) {
     panY = -(seat.v - 0.5) * baseScale() * zoom;
   }
   draw(); updateDetail();
+  if (matchMedia('(min-width: 801px)').matches) document.querySelector('.review-panel').scrollTop = 0;
   for (const button of $('seat-list').querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.seatId === seat.seatId));
 }
 
@@ -175,7 +267,7 @@ function updateList() {
     button.setAttribute('aria-pressed', String(selected?.seatId === seat.seatId));
     const status = document.createElement('span'); status.className = 'seat-type'; status.textContent = t[seat.identityStatus] || t.unidentified;
     const title = document.createElement('span'); title.textContent = currentLabel(seat);
-    const id = document.createElement('span'); id.className = 'seat-id'; id.textContent = seat.seatId;
+    const id = document.createElement('span'); id.className = 'seat-id'; id.textContent = bookMode ? bookCitation(seat) : seat.seatId;
     button.append(status, title, id); button.addEventListener('click', () => selectSeat(seat, true)); list.append(button);
   }
   const [n, g] = counts(filtered);
@@ -205,6 +297,7 @@ function setRealm(next) {
   for (const b of document.querySelectorAll('[data-realm]')) b.setAttribute('aria-pressed', String(b.dataset.realm === realm));
   $('diagram-title').textContent = text()[realm]; $('seat-count').textContent = text().counts(...counts(ALL[realm]));
   updateLocations(); applyFilters(); updateDetail(); fit();
+  if (matchMedia('(min-width: 801px)').matches) document.querySelector('.review-panel').scrollTop = 0;
   const url = new URL(location.href); url.searchParams.set('realm', realm); history.replaceState(null, '', url);
 }
 
@@ -284,12 +377,14 @@ for (const b of document.querySelectorAll('[data-lang]')) b.addEventListener('cl
 $('seat-search').addEventListener('input', applyFilters); $('location-filter').addEventListener('change', applyFilters);
 $('more-seats').addEventListener('click', () => { limit += 60; updateList(); });
 $('zoom-in').addEventListener('click', () => zoomAt(1.4)); $('zoom-out').addEventListener('click', () => zoomAt(1 / 1.4)); $('fit-view').addEventListener('click', fit);
-$('edition-source').href = MANDALA_EDITION.templeUrl; $('catalogue-source').href = MANDALA_EDITION.catalogueUrl;
+$('edition-source').href = bookMode ? MANDALA_EDITION.catalogueUrl : SAIIN_EDITION.templeUrl;
+$('catalogue-source').href = bookMode ? 'saiin.html' : SAIIN_EDITION.catalogueUrl;
+if (bookMode) $('back-link').href = 'engine.html';
 new ResizeObserver(() => {
   const previousScale = baseScale();
   const rect = $('canvas-wrap').getBoundingClientRect(); width = rect.width; height = rect.height;
   // Pan 以螢幕像素保存；視口改尺寸時同率換算，保留圖本上的視心。
   const ratio = baseScale() / previousScale; panX *= ratio; panY *= ratio;
-  const dpr = Math.min(devicePixelRatio || 1, 2); canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); requestDraw();
+  const dpr = Math.min(devicePixelRatio || 1, 2); canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); draw();
 }).observe($('canvas-wrap'));
 applyLanguage(); setRealm(realm);
