@@ -9,6 +9,7 @@ import {
 } from '../js/layout.js';
 import { 落筆, 器筆, figureIdentity, figureStatus } from '../js/funpon.js';
 import { TAIZO_SEATS, SEAT_IDENTITIES, seatByKey, primarySeatOf, seatsOf, polarOf } from '../js/data/seats.js';
+import { TAIZO_BIJA } from '../js/data/taizo-bija.js';
 import { seatPosition, seatSize, OUTER_R, OUTER_ZIGZAG } from '../js/layout.js';
 import { 上壇之 } from '../vendor/fenben/dist/baimiao.js';
 
@@ -173,10 +174,22 @@ test('the seat layer keeps 412 womb seats, one primary seat per identity, and na
   assert.equal(SEAT_IDENTITIES.length, 352);
   for (const d of DEITIES) if (d.t) assert.equal(primarySeatOf(d.id).d, d, `${d.id}: primary seat must carry its identity`);
   for (const d of DEITIES) if (d.t) assert.equal(primarySeatOf(d.id).court, d.t.court, `${d.id}: primary seat must sit in its own court`);
+  const IAST = /^[a-zāīūṛṝḷḹṃṁḥñṅṇṭḍśṣ\s-]+$/;
   for (const d of SEAT_IDENTITIES) {
-    assert.equal(d.t.bija, '', `${d.id}: placeholder seats never invent a seed syllable`);
+    // A placeholder shows a seed syllable only when the registry records it with at least one quoted source.
+    const rec = TAIZO_BIJA[d.id];
+    if (rec) {
+      assert.ok(rec.bija && IAST.test(rec.bija), `${d.id}: registry seed syllable must be IAST`);
+      assert.ok(rec.sources.length >= 1 && rec.sources.every(x => x.title && x.url && x.quote), `${d.id}: registry entry needs quoted sources`);
+      assert.ok(['single', 'cross'].includes(rec.grade), `${d.id}: registry grade`);
+      assert.equal(d.t.bija, rec.bija);
+      assert.equal(d.bijaPending, false);
+    } else {
+      assert.equal(d.t.bija, '', `${d.id}: placeholder seats never invent a seed syllable`);
+      assert.equal(d.bijaPending, true);
+    }
     assert.equal(d.samaya, null, `${d.id}: placeholder seats never borrow an emblem`);
-    assert.ok(d.seatOnly && d.bijaPending);
+    assert.ok(d.seatOnly);
     assert.equal(figureStatus(d.id, 't'), 'missing', `${d.id}: placeholder must not pass the figure gate`);
     assert.equal(seatByKey.get(d.id).d, d);
   }
