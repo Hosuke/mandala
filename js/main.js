@@ -4,7 +4,8 @@
 // 滑尺即理智之際，遍歷即上下二門，入壇即法轉羯磨。
 // ─────────────────────────────────────────────────────────────────────────────
 import * as THREE from '../vendor/three.module.js';
-import { DEITIES, byId } from './data/deities.js';
+import { DEITIES, byId, FAMILY_ANCHOR } from './data/deities.js';
+import { seatIndex } from './data/seats.js';
 import { siddham as siddhamRaw, siddhamPhrase as siddhamPhraseRaw } from './data/siddham.js';
 
 // 悉曇字體未及載入時，種字退羅馬轉寫（canvas 紋理不會隨字體後到而重繪）
@@ -15,8 +16,9 @@ import {
   COURTS, RING_RADIUS, PETAL_RADIUS, FAMILY_COLOR, FAMILY_ZH, ASSEMBLIES,
 } from './data/courts.js';
 import {
-  morphTargets, assemblyEchoes, taizoEdges, kongoEdges,
+  morphTargets, assemblyEchoes, taizoEdges, kongoEdges, kongoLocal,
   spiralCurve, cellCenter, assemblyByKey, CELL, DESCENT_ORDER,
+  TAIZO_SEATS, seatPosition, seatSize, OUTER_R, OUTER_ZIGZAG,
 } from './layout.js';
 import {
   uiTable, COURT_EN, ASM_EN, CIRCLE_EN, FAMILY_EN, FORMVAR_EN,
@@ -60,6 +62,24 @@ const FIGURE_NOTE = {
     pending: 'Figure awaiting verification; seed syllable shown.', missing: 'Figure not yet available; seed syllable shown.' },
   ja: { verified: '尊形：考証済みの粉本', symbol: '一切如来智印は三角の智火で表す。',
     pending: '尊形は考証待ち。種字を示す。', missing: '尊形は未整備。種字を示す。' },
+};
+const SEAT_STUB_NOTE = {
+  zh: '席身：種字、尊形俱待核，暫列書載尊名。',
+  en: 'Seat placeholder: seed syllable and figure await verification; the name recorded in the book is shown.',
+  ja: '席身：種字・尊形は考証待ち。書載の尊名を示す。',
+};
+// 席身有種字之錄者：標其據（單源／交叉），尊形仍待核
+const SEAT_BIJA_NOTE = {
+  zh: (g, n) => `席身：種字據網源逐席補錄（${g === 'cross' ? '≥2 源交叉' : '單源'}：${n}），尊形待核。`,
+  en: (g, n) => `Seat placeholder: seed syllable recorded from web sources (${g === 'cross' ? 'cross-checked' : 'single source'}: ${n}); figure awaits verification.`,
+  ja: (g, n) => `席身：種字は網源より逐席補録（${g === 'cross' ? '二源以上' : '単源'}：${n}）、尊形は考証待ち。`,
+};
+const BOOK_LABEL = { zh: '書據：', en: 'Source: ', ja: '書據：' };
+const OBS_LABEL = { zh: '書載：', en: 'Recorded: ', ja: '書載：' };
+const POSE_WORD = {
+  zh: { seated: '坐', standing: '立', flying: '飛' },
+  en: { seated: 'seated', standing: 'standing', flying: 'flying' },
+  ja: { seated: '坐', standing: '立', flying: '飛' },
 };
 const NAME_ONLY_NOTE = {
   zh: '尊形與種字尚未核定，暫列尊名。',
@@ -152,8 +172,8 @@ async function boot() {
     const lord = d.id === 'center' || d.k?.slot === 'lord' || d.t?.court === 'chudai';
     // 尊形／三昧耶乃粉本專筆之相，數百細筆非 256 幅所能容（一指僅合 1.3px），
     // 放大即糊——此二相升幅；種字諸相仍舊（主人指糊之修）
-    const fine = state.form === 'samaya' || state.form === 'wrath-samaya' ||
-      state.form === 'figure' || state.form.startsWith('figure-');
+    const fine = !d.seatOnly && (state.form === 'samaya' || state.form === 'wrath-samaya' ||
+      state.form === 'figure' || state.form.startsWith('figure-'));
     return deityTexture({
       id: `${d.id}|${side}`, zh: a.zh, bija: a.bija, sid: siddham(a.bija),
       samaya: d.samaya, color: FAMILY_COLOR[d.family], form: state.form,
@@ -163,11 +183,12 @@ async function boot() {
   }
 
   // ── 真身節點（形變之主體）──
+  // 胎藏之節點自席位層出（四百一十二席）：一尊之正席持其兩面而形變；一尊之他席與席身
+  // 唯胎藏一面，形變時歸其尊之金剛位／部主而隱（多席歸一身）。金剛界獨面之尊與講堂補尊另立。
   const nodes = [];
-  const nodeById = {};
-  for (const d of ALL_DEITIES) {
-    if (d.rishuOnly) continue;
-    const { posT, posK, hasT, hasK } = morphTargets(d);
+  const nodeById = {};   // 尊號 → 正席之節點（結緣・金剛脈絡・講堂所用）
+  const nodeByKey = {};  // 席號／尊號 → 節點（胎藏脈絡以席為端）
+  function makeNode(d, { seat = null, posT, posK, hasT, hasK, key }) {
     const mat = new THREE.MeshBasicMaterial({
       map: nodeTex(d, hasT ? 't' : 'k'), transparent: true, depthWrite: false, side: THREE.DoubleSide,
     });
@@ -177,8 +198,9 @@ async function boot() {
     group.add(mesh);
     scene.add(group);
 
-    const ringT = hasT ? (d.t.court === 'chudai' ? 0 : courtByKey[d.t.court].ring) : 0;
-    const kodoXZ = KODO_LAYOUT[d.id];
+    const ringT = seat ? (seat.court === 'chudai' ? 0 : courtByKey[seat.court].ring) : 0;
+    const primary = !seat || seat.primary;
+    const kodoXZ = primary ? KODO_LAYOUT[d.id] : null;
     let rT = Math.hypot(posT.x, posT.z);
     let thetaT = Math.atan2(posT.z, posT.x);
     let rK = Math.hypot(posK.x, posK.z);
@@ -196,10 +218,10 @@ async function boot() {
       thetaK = thetaT;
     }
     const node = {
-      d, group, mesh, posT, posK, hasT, hasK, ringT,
+      d, seat, key, group, mesh, posT, posK, hasT, hasK, ringT,
       rT, thetaT, rK, thetaK,
       delay: Math.min(ringT * 0.025, 0.1),
-      sizeT: sizeOfT(d), sizeK: sizeOfK(d),
+      sizeT: seat ? seatSize(seat) : 2.7, sizeK: sizeOfK(d),
       hover: 0, mul: 1, kind: 'node',
       kodoOnly: !!d.kodoOnly,
       kodoPos: kodoXZ ? new THREE.Vector3(kodoXZ[0], 0, kodoXZ[1]) : null,
@@ -207,10 +229,25 @@ async function boot() {
     };
     mesh.userData.ref = node;
     nodes.push(node);
-    nodeById[d.id] = node;
+    nodeByKey[key] = node;
+    if (seat) nodeByKey[seat.seatId] = node;   // 席號亦可索（胎藏脈絡以席為端）
+    if (primary) nodeById[d.id] = node;
     // 預熱兩面之紋，免中途批量緩生而卡頓
     if (hasT) nodeTex(d, 't');
     if (hasK) nodeTex(d, 'k');
+    return node;
+  }
+  for (const s of TAIZO_SEATS) {
+    const d = s.d;
+    const own = !!(d.k && d.k.circle);          // 此尊有金剛界之位
+    const hasK = s.primary && own;              // 唯正席持兩面而形變
+    const posK = own ? kongoLocal(d) : kongoLocal(byId[FAMILY_ANCHOR[d.family]]);
+    makeNode(d, { seat: s, posT: seatPosition(s), posK, hasT: true, hasK, key: s.primary ? d.id : s.seatId });
+  }
+  for (const d of ALL_DEITIES) {
+    if (d.rishuOnly || d.t) continue;           // 有胎藏面者已由席位入壇
+    const { posT, posK, hasT, hasK } = morphTargets(d);
+    makeNode(d, { posT, posK, hasT, hasK, key: d.id });
   }
 
   // ── 九會回響（八會之表示變換）──
@@ -563,7 +600,7 @@ async function boot() {
       ? (effLambda(best) < 0.5 ? 't' : 'k')
       : (best.hasT ? 't' : 'k');
     try {
-      localStorage.setItem('mandala-bond', JSON.stringify({ id: best.d.id, side: bondSide }));
+      localStorage.setItem('mandala-bond', JSON.stringify({ id: best.key, side: bondSide }));
     } catch { /* 私隱模式無妨 */ }
     const name = (bondSide === 't' ? best.d.t : best.d.k).zh;
     ui.setBond(T.bondPrefix(name));
@@ -612,7 +649,7 @@ async function boot() {
     if (saved) {
       let id = saved, side = null;
       try { ({ id, side } = JSON.parse(saved)); } catch { /* 舊式裸 id */ }
-      const node = nodeById[id];
+      const node = nodeByKey[id] ?? nodeById[id];
       if (node) {
         bondNode = node;
         bondSide = side === 'k' && node.hasK ? 'k' : node.hasT ? 't' : 'k';
@@ -713,6 +750,30 @@ async function boot() {
     return sk ? `${zh} · ${sk}` : zh;
   }
 
+  // 席位之題：院・席次（配置圖圈號）
+  function seatLoc(seat) {
+    const n = seatIndex(seat), court = courtName(seat.court);
+    return lang === 'en' ? `${T.locT} · ${court} · seat ${n}` : `${T.locT} · ${court} · 第${n}席`;
+  }
+  // 書載形相之摘（儀軌待核之草）：面臂・姿・印・持物・座——書所未載者不補
+  const CN_NUM = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+  const cn = n => (lang === 'en' ? String(n) : (CN_NUM[n] ?? String(n)));
+  function observationSummary(o) {
+    if (!o) return '';
+    const p = [];
+    if (o.kind === 'symbol') p.push(lang === 'en' ? 'emblem seat' : '標幟之席');
+    if (o.heads != null && o.arms != null) p.push(lang === 'en' ? `${o.heads} face(s), ${o.arms} arm(s)` : `${cn(o.heads)}面${cn(o.arms)}臂`);
+    else if (o.arms != null) p.push(lang === 'en' ? `${o.arms} arm(s)` : `${cn(o.arms)}臂`);
+    if (o.pose) p.push(POSE_WORD[lang][o.pose] ?? o.pose);
+    if (o.mudra) p.push(o.mudra);
+    if (o.rightHand) p.push(lang === 'en' ? `R: ${o.rightHand}` : `右${o.rightHand}`);
+    if (o.leftHand) p.push(lang === 'en' ? `L: ${o.leftHand}` : `左${o.leftHand}`);
+    if (o.attributes?.length) p.push(o.attributes.join('・'));
+    if (o.mount) p.push(o.mount);
+    if (o.color) p.push(o.color);
+    return p.length ? `${OBS_LABEL[lang]}${p.join(lang === 'en' ? '; ' : '・')}` : '';
+  }
+
   let infoSide = null;
   function showInfo(ref, sound = true) {
     infoNode = ref;
@@ -735,7 +796,7 @@ async function boot() {
       gside = side;
       aspect = side === 't' ? d.t : d.k;
       const parts = [];
-      if (ref.hasT) parts.push(`${T.locT} · ${courtName(d.t.court)}`);
+      if (ref.hasT) parts.push(ref.seat ? seatLoc(ref.seat) : `${T.locT} · ${courtName(d.t.court)}`);
       if (ref.hasK) {
         parts.push(lang === 'en'
           ? `${T.locK} · ${T.jojin} · ${circleName(d.k.circle) ?? ''}`
@@ -752,11 +813,24 @@ async function boot() {
     const identity = figureIdentity(textureId);
     const isFigure = gform === 'figure' || gform.startsWith('figure-');
     const isSymbol = gform === 'samaya' || gform === 'wrath-samaya';
-    const bookSeat = isSymbol ? bookSymbolForTexture(textureId) : bookSeatForTexture(textureId);
-    const figureNote = (isFigure || isSymbol) && bookSeat ? bookCitation(bookSeat)
-      : !aspect.bija ? NAME_ONLY_NOTE[lang]
-      : gform === 'wrath-samaya' && identity?.id === 'gozanze' ? SAMAYA_PENDING_NOTE[lang]
-      : isFigure && identity ? FIGURE_NOTE[lang][figureStatus(identity.id, identity.side)] : '';
+    const seat = ref.kind === 'node' && gside === 't' ? ref.seat : null;
+    const bookSeat = ref.kind === 'echo'
+      ? (isSymbol ? bookSymbolForTexture(textureId) : bookSeatForTexture(textureId)) : null;
+    const status = identity ? figureStatus(identity.id, identity.side) : 'missing';
+    const notes = [];
+    if (seat) {
+      // 席之占位：粉本已核→種字→尊名之閘序，其狀態與書據並陳（儀軌待核之草，隨席可見）
+      notes.push(seat.stub
+        ? (seat.bija ? SEAT_BIJA_NOTE[lang](seat.bija.grade, seat.bija.sources.map(x => x.title).join('・')) : SEAT_STUB_NOTE[lang])
+        : isFigure ? FIGURE_NOTE[lang][status]
+        : isSymbol && !d.samaya ? SAMAYA_PENDING_NOTE[lang] : '');
+      notes.push(`${BOOK_LABEL[lang]}${bookCitation(seat.book)}`);
+      notes.push(observationSummary(seat.book.observation));
+    } else if (bookSeat && (isFigure || isSymbol)) notes.push(bookCitation(bookSeat));
+    else if (!aspect.bija) notes.push(NAME_ONLY_NOTE[lang]);
+    else if (gform === 'wrath-samaya' && identity?.id === 'gozanze') notes.push(SAMAYA_PENDING_NOTE[lang]);
+    else if (isFigure && identity) notes.push(FIGURE_NOTE[lang][status]);
+    const figureNote = notes.filter(Boolean).join('\n');
     const g = gentenFor(identity?.id ?? d.id, identity?.side ?? gside, gform);
     const genten = g ? {
       src: g.src,
@@ -834,6 +908,7 @@ async function boot() {
       }
       n.group.position.set(px, 0.6, pz);
       let opBase = n.hasT && n.hasK ? 1 : (n.hasT ? 1 - eff : eff);
+    if (n.seat?.stub) opBase *= 0.66;                      // 席身如暗星：主尊亮而眷屬淡
       if (n.kodoOnly) opBase = kodoMix;                      // 缺尊唯於講堂現
       else if (!n.kodoPos) opBase *= 1 - kodoMix;            // 非廿一尊者隱
       else opBase += (1 - opBase) * kodoMix;                 // 壇上成員全顯
@@ -849,7 +924,7 @@ async function boot() {
       // 不二之際，兩部同體之錨點微明而脹——結構於中途可見
       const advaya = n.hasT && n.hasK ? Math.max(0, 1 - Math.abs(l - 0.5) * 2.6) : 0;
       const size = (n.sizeT + (n.sizeK - n.sizeT) * eff) * (0.55 + 0.45 * opBase) *
-        (1 + 0.13 * n.hover + 0.3 * advaya + 0.2 * kanPulse);
+        (1 + (n.seat?.stub ? 0.45 : 0.13) * n.hover + 0.3 * advaya + 0.2 * kanPulse);
       n.mesh.scale.setScalar(size);
       poseDisc(n, size, stand);
 
@@ -888,7 +963,7 @@ async function boot() {
     for (const m of taizoDecor.mats) m.m.opacity = m.base * taizoFade * kanDim * notKodo;
     for (const m of kongoDecor.mats) m.m.opacity = m.base * kongoFade * kanDim * notKodo;
     for (const m of kodoDecor.mats) m.m.opacity = m.base * kodoMix * kanDim;
-    edgesT.update(nodeById);
+    edgesT.update(nodeByKey);
     edgesT.lines.material.opacity = 0.15 * taizoFade * kanDim * notKodo;
     edgesK.update(nodeById);
     edgesK.lines.material.opacity = (0.15 + 0.3 * kanPulse) * kongoFade * kanDim * notKodo *
@@ -968,13 +1043,6 @@ async function boot() {
 }
 
 // ── 尺度 ────────────────────────────────────────────────────────────────────
-function sizeOfT(d) {
-  if (!d.t) return 2.7;
-  if (d.t.slot === 'C') return 5.6;
-  if (d.t.court === 'chudai') return 3.7;
-  if (d.t.court === 'gekongobu') return 2.4;
-  return 2.8;
-}
 function sizeOfK(d) {
   if (!d.k || !d.k.circle) return 2.7;
   if (d.id === 'center') return 4.6;
@@ -1068,26 +1136,43 @@ function makeTaizoDecor() {
     line.renderOrder = 1;
     group.add(line);
   };
+  // 環之莊嚴：八葉之界、諸院之間（遍知／釋迦之隙、釋迦／文殊之隙）、外院內外之緣
   goldLine(circleLine(PETAL_RADIUS + 2.6), 0.22);
-  for (const r of RING_RADIUS.slice(1)) goldLine(circleLine(r), 0.15);
-  goldLine(circleLine(RING_RADIUS[4] + 2.8), 0.1);
+  for (const r of [17.4, 25.6]) goldLine(circleLine(r), 0.13);
+  goldLine(circleLine(OUTER_R - OUTER_ZIGZAG - 1.7), 0.15);
+  goldLine(circleLine(OUTER_R + OUTER_ZIGZAG + 1.7), 0.1);
 
+  // 院名題記：如絹本之榜題，淡金書於院之地（席下一層，不掩諸席）；幅隨院之厚薄。
+  // 外金剛部之名仍立於環外。
   const D2R = PI / 180;
   for (const c of COURTS) {
     if (c.key === 'chudai') continue;
-    let angle, r;
-    if (c.key === 'gekongobu') { angle = 99; r = RING_RADIUS[4] + 3.4; }
-    else if (c.key === 'jimyo') { angle = 180; r = RING_RADIUS[c.ring] + 3.2; }
-    else {
-      angle = (c.arc[0] + c.arc[1]) / 2;
-      r = RING_RADIUS[c.ring] + 3.2;
+    if (c.key === 'gekongobu') {
+      const r = OUTER_R + OUTER_ZIGZAG + 3.6;
+      const sp = makeLabelSprite(c.zh, new THREE.Vector3(Math.cos(99 * D2R) * r, 1.2, -Math.sin(99 * D2R) * r));
+      mats.push({ m: sp.material, base: 0.8 });
+      group.add(sp);
+      continue;
     }
-    const pos = new THREE.Vector3(Math.cos(angle * D2R) * r, 1.2, -Math.sin(angle * D2R) * r);
-    const sp = makeLabelSprite(c.zh, pos);
-    mats.push({ m: sp.material, base: 0.8 });
+    let sx = 0, sz = 0, n = 0, rmin = 1e9, rmax = 0;
+    for (const s of TAIZO_SEATS) {
+      if (s.court !== c.key) continue;
+      const p = seatPosition(s);
+      const r = Math.hypot(p.x, p.z);
+      sx += p.x; sz += p.z; n++;
+      rmin = Math.min(rmin, r); rmax = Math.max(rmax, r);
+    }
+    const tex = labelTexture(c.zh, { alpha: 0.9 });
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false });
+    const sp = new THREE.Sprite(mat);
+    const H = Math.min(11, Math.max(4.6, rmax - rmin + 3.2));
+    sp.scale.set(H * tex.userData.aspect, H, 1);
+    sp.position.set(sx / n, 0.12, sz / n);
+    sp.renderOrder = 1;
+    mats.push({ m: sp.material, base: 0.34 });
     group.add(sp);
   }
-  const title = makeLabelSprite('大悲胎藏生', new THREE.Vector3(-RING_RADIUS[4] - 8, 2, 0));
+  const title = makeLabelSprite('大悲胎藏生', new THREE.Vector3(-OUTER_R - 9.5, 2, 0));
   mats.push({ m: title.material, base: 0.55 });
   group.add(title);
   return { group, mats };

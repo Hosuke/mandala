@@ -69,9 +69,10 @@ test('Book-corrected compass directions also hold in the morphing study', () => 
     const p = shiin.nodes.find(n => n.d.id === id).pos.clone().sub(c);
     assert.deepEqual([Math.sign(p.x), Math.sign(p.z)], corners[i]);
   });
+  // 上冊 p151：持明院在中臺之西（畫面下方），自左而右 勝三世、大威德、般若、降三世、不動。
   let previous = -Infinity;
   for (const id of ['daiitoku', 'hannya', 'gozanze-t', 'fudo']) {
-    const p = taizoPosition(byId[id]); assert.ok(p.x < 0 && p.z > previous); previous = p.z;
+    const p = taizoPosition(byId[id]); assert.ok(p.z > 0 && p.x > previous, `${id}: expected west row, left to right`); previous = p.x;
   }
 });
 function context() {

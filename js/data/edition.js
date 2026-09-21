@@ -27,7 +27,11 @@ export const MANDALA_EDITION = Object.freeze({
   author: '栂尾祥雲', editor: '吳信如', publisher: '中國藏學出版社',
   publishedOn: '2011-06', edition: '第 1 版，第 1 次印刷',
   isbn: '978-7-80253-355-4', selectedOn: '2026-09-20',
+  // 《吳信如全集》第 31（上）、32（下）卷；用戶所供掃描本只留本機（docs/參考文獻.md），不入庫。
+  collectedWorks: { upper: 31, lower: 32 },
+  pdfPages: { upper: 381, lower: 375 },
   catalogueUrl: 'docs/依書校正.md',
+  bibliographyUrl: 'docs/參考文獻.md',
   sourceSeatCounts: Object.freeze({ t: 412, k: 1481 }),
   countNote: '按本版逐院／逐會圖表計席；金剛含支輪四大神及其標幟，千佛逐席展開。',
   pageOffsets: Object.freeze({ upper: 29, lower: -347 }),

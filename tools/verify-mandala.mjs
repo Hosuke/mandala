@@ -8,6 +8,8 @@ import {
   assemblyEchoes, taizoEdges, kongoEdges,
 } from '../js/layout.js';
 import { 落筆, 器筆, figureIdentity, figureStatus } from '../js/funpon.js';
+import { TAIZO_SEATS, SEAT_IDENTITIES, seatByKey, primarySeatOf, seatsOf, polarOf } from '../js/data/seats.js';
+import { seatPosition, seatSize, OUTER_R, OUTER_ZIGZAG } from '../js/layout.js';
 import { 上壇之 } from '../vendor/fenben/dist/baimiao.js';
 
 const faces = DEITIES.flatMap(d => ['t', 'k'].filter(side => d[side]).map(side => ({ d, side })));
@@ -146,15 +148,59 @@ test('both projections have finite, distinct seats; missing sides use valid morp
   }
 });
 
-test('the eight directional devas keep E/SE/S/SW/W/NW/N/NE seats', () => {
-  const seats = {
-    taishaku: [34, 0, 0], katen: [24.041630560342615, 0, 24.041630560342615],
-    emma: [0, 0, 34], rasetsu: [-24.041630560342615, 0, 24.041630560342615],
-    suiten: [-34, 0, 0], futen: [-24.041630560342615, 0, -24.041630560342615],
-    bishamon: [0, 0, -34], ishana: [24.041630560342615, 0, -24.041630560342615],
+test('the eight directional devas keep E/SE/S/SW/W/NW/N/NE sectors on the outer ring', () => {
+  // Screen convention of the womb projection: east up (90°), south right (0°), north left (180°), west down (270°).
+  const sectors = {
+    taishaku: 90, katen: 45, emma: 0, rasetsu: -45, suiten: -90, futen: -135, bishamon: 180, ishana: 135,
   };
-  for (const [id, position] of Object.entries(seats)) assertPosition(taizoPosition(byId[id]), position, id);
-  // Brahma, earth, sun and moon use illustrative gaps; these are not certified compass seats.
+  for (const [id, expected] of Object.entries(sectors)) {
+    const p = taizoPosition(byId[id]);
+    finitePosition(p, id);
+    const angle = Math.atan2(-p.z, p.x) * 180 / Math.PI;
+    const diff = Math.abs(((angle - expected + 540) % 360) - 180);
+    assert.ok(diff <= 22.5, `${id}: expected sector ${expected}°, got ${angle.toFixed(1)}°`);
+    const r = Math.hypot(p.x, p.z);
+    assert.ok(Math.abs(r - OUTER_R) <= OUTER_ZIGZAG + 1.2, `${id}: expected the outer ring, got r=${r.toFixed(1)}`);
+  }
+  // Brahma, earth, sun and moon have no compass seat of their own; only their existence on the ring is asserted.
+  for (const id of ['bonten', 'jiten', 'nitten', 'gatten']) finitePosition(taizoPosition(byId[id]), id);
+});
+
+test('the seat layer keeps 412 womb seats, one primary seat per identity, and name-only placeholders', () => {
+  assert.equal(TAIZO_SEATS.length, 412);
+  assert.equal(new Set(TAIZO_SEATS.map(s => s.seatId)).size, 412);
+  assert.equal(TAIZO_SEATS.filter(s => s.primary).length, 405);
+  assert.equal(SEAT_IDENTITIES.length, 352);
+  for (const d of DEITIES) if (d.t) assert.equal(primarySeatOf(d.id).d, d, `${d.id}: primary seat must carry its identity`);
+  for (const d of DEITIES) if (d.t) assert.equal(primarySeatOf(d.id).court, d.t.court, `${d.id}: primary seat must sit in its own court`);
+  for (const d of SEAT_IDENTITIES) {
+    assert.equal(d.t.bija, '', `${d.id}: placeholder seats never invent a seed syllable`);
+    assert.equal(d.samaya, null, `${d.id}: placeholder seats never borrow an emblem`);
+    assert.ok(d.seatOnly && d.bijaPending);
+    assert.equal(figureStatus(d.id, 't'), 'missing', `${d.id}: placeholder must not pass the figure gate`);
+    assert.equal(seatByKey.get(d.id).d, d);
+  }
+  // Every seat has a finite planar position inside the outer ring; seats never overlap.
+  const entries = TAIZO_SEATS.map(s => [s.seatId, seatPosition(s)]);
+  uniquePositions(entries, 'seats');
+  for (const [id, p] of entries) assert.ok(Math.hypot(p.x, p.z) <= OUTER_R + OUTER_ZIGZAG + 0.7, `${id}: beyond the outer ring`);
+  for (let i = 0; i < TAIZO_SEATS.length; i++) {
+    for (let j = 0; j < i; j++) {
+      const a = TAIZO_SEATS[i], b = TAIZO_SEATS[j];
+      if (a.court === 'chudai' || b.court === 'chudai') continue;
+      const d = seatPosition(a).distanceTo(seatPosition(b));
+      const min = (seatSize(a) + seatSize(b)) * 0.5;
+      assert.ok(d >= min * 0.85, `${a.seatId} and ${b.seatId} are crowded: ${d.toFixed(2)} < ${min.toFixed(2)}`);
+    }
+  }
+  // Court order follows the book: the vidyā-holders run 勝三世, 大威德, 般若, 降三世, 不動 from viewer's left to right.
+  assert.deepEqual(seatsOf('jimyo').map(s => s.name), ['勝三世明王', '大威德明王', '般若菩薩', '降三世明王', '不動明王']);
+  // Square-to-ring mapping: east is up, south is right, corners keep their 45° sectors.
+  assert.equal(polarOf(0.5, 0.1).theta, 90);
+  assert.equal(polarOf(0.9, 0.5).theta, 0);
+  assert.equal(polarOf(0.1, 0.5).theta, 180);
+  assert.equal(polarOf(0.5, 0.9).theta, 270);
+  assert.equal(polarOf(0.1, 0.1).theta, 135);
 });
 
 test('the sixteen attendants occupy front, right, left and rear seats around their lords', () => {
@@ -236,7 +282,12 @@ test('the eight echo assemblies retain their casts and distinct seats', () => {
     uniquePositions(nodes.map(n => [n.d.id, n.pos]), assembly.key);
     for (const { d } of nodes) assert.equal(byId[d.id], d);
   }
-  for (const [a, b] of [...taizoEdges(), ...kongoEdges()]) {
+  for (const [a, b] of taizoEdges()) {
+    assert.ok(seatByKey.get(a) && seatByKey.get(b), `edge ${a}/${b}: unknown seat`);
+    assert.ok(!seatByKey.get(a).stub && !seatByKey.get(b).stub, `edge ${a}/${b}: placeholders carry no lineage`);
+    assert.notEqual(a, b, `edge ${a}/${b}: self-link`);
+  }
+  for (const [a, b] of kongoEdges()) {
     assert.ok(byId[a] && byId[b], `edge ${a}/${b}: unknown deity`);
     assert.notEqual(a, b, `edge ${a}/${b}: self-link`);
   }

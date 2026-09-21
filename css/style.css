@@ -424,6 +424,7 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
   color: var(--gold);
   font-size: 12px;
   line-height: 1.7;
+  white-space: pre-line; /* 席之占位狀態・書據・書載形相各一行 */
 }
 #info-desc {
   margin-top: 10px;

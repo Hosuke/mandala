@@ -4,8 +4,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import * as THREE from '../vendor/three.module.js';
 import { 落筆, 器筆, figureIdentity, figureStatus } from './funpon.js';
-import { bookSeatForTexture, bookSymbolForTexture } from './data/book-catalog.js';
-import { drawBookSeat } from './book-drawing.js';
 
 const GOLD = '#d8b36a';
 const GOLD_DIM = '#a8854a';
@@ -782,9 +780,8 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
   };
 
   if (form === 'figure' || form.startsWith('figure-')) {
-    // 大曼荼羅：尊形之略相（複合會相由此衍生）
-    const bookSeat = bookSeatForTexture(id);
-    if (!bookSeat && form === 'figure-subtle') {
+    // 大曼荼羅：尊形之相（複合會相由此衍生）
+    if (form === 'figure-subtle') {
       // 微細會：尊住一鈷杵中——杵以金線明示，毋使隱沒
       ctx.save();
       ctx.globalAlpha = 0.78;
@@ -797,19 +794,20 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     ctx.shadowColor = colHex;
     // 專筆數百線密，逐筆重暈（7k）則暈積成霧、筆意盡沒——微暈存輝而已
     ctx.shadowBlur = 2 * k;
-    if (!bookSeat && form === 'figure-subtle') ctx.scale(0.62, 0.62);
-    else if (!bookSeat && form === 'figure-offer') { ctx.translate(0, -R * 0.07); ctx.scale(0.86, 0.86); }
+    if (form === 'figure-subtle') ctx.scale(0.62, 0.62);
+    else if (form === 'figure-offer') { ctx.translate(0, -R * 0.07); ctx.scale(0.86, 0.86); }
+    // 尊形之閘序（寧缺毋誤）：粉本已核（vendor/fenben 之閘）→ 種字 → 尊名。
+    // 標幟之席（智印）現其器；書載通形（book-drawing，現圖頁所用）不入壇——
+    // 通用二臂不冒充多面多臂異印之尊，此其律。id 二格式：主壇「尊|側」，九會「會|尊」。
     const identity = figureIdentity(id);
     const status = identity ? figureStatus(identity.id, identity.side) : 'missing';
-    if (bookSeat) drawBookSeat(ctx, bookSeat, R * .90);
-    else if (status === 'symbol') drawIcon(R * 0.62);
+    if (status === 'symbol') drawIcon(R * 0.62);
     else {
       const done = identity && 落筆(ctx, R, identity.id, identity.side);
-      // 書中尚無相同席位時沿用已核筆或種字；書載形相由上方獨立資料繪製。
       if (!done) drawFallback();
     }
     ctx.restore();
-    if (!bookSeat && form === 'figure-offer') {
+    if (form === 'figure-offer') {
       // 供養會：下捧蓮臺
       ctx.save();
       ctx.shadowBlur = 0;
@@ -824,12 +822,7 @@ export function deityTexture({ id, zh, bija, sid, samaya, color, form = 'bija', 
     // 餘尊無其器——皆守現行示意（寧缺毋誤）。id 二格式同粉本之閘。
     const identity = figureIdentity(id);
     const 器鍵 = identity?.side === 'k' ? identity.id : null;
-    const bookSymbol = bookSymbolForTexture(id);
     let drawn = false;
-    if (bookSymbol?.observation.kind === 'symbol') {
-      drawBookSeat(ctx, bookSymbol, R * .90);
-      drawn = true;
-    }
     if (!drawn && 器鍵) {
       ctx.save();
       ctx.shadowColor = colHex;
