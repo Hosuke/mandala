@@ -42,7 +42,7 @@ const UI_ZH = {
   kodoBtn: '講堂',
   gentenBtn: '原典',
   saiinBtn: '兩界現圖',
-  saiinTitle: '依《曼荼羅之研究》逐席查閱尊形與書頁出典',
+  saiinTitle: '校對頁：依《曼荼羅之研究》逐席對照名位、形相與書頁出典',
   gentenTitle: '原典帖 · 絹本曼荼羅之投影',
   gentenIntro: '壇上諸尊皆程序所現（零圖片資源）；此帖所陳，乃歷史絹本中之投影——以證「絹本是投影，非結構」。皆 CC0 公有領域。',
   titles: {
@@ -92,7 +92,7 @@ const UI_EN = {
   kodoBtn: 'Kōdō',
   gentenBtn: 'Genten',
   saiinBtn: 'Sourced diagram',
-  saiinTitle: 'Inspect the complete book-based seat catalogue and page references',
+  saiinTitle: 'Proofing page: the complete book-based seat catalogue with page references',
   gentenTitle: 'Genten — projections of the silk mandala',
   gentenIntro: 'Every deity in the maṇḍala is drawn procedurally (zero image assets). The leaves shown here are projections from historical silk paintings — a witness to “the silk is a projection, not the structure.” All CC0, public domain.',
   titles: {
@@ -112,7 +112,7 @@ const UI_EN = {
 
 const UI_JA = {
   saiinBtn: '両界現図',
-  saiinTitle: '『曼荼羅之研究』に基づく尊位・形相・出典頁',
+  saiinTitle: '校正頁：『曼荼羅之研究』に基づく尊位・形相・出典頁',
   hintAerial: 'ドラッグで旋観 · ホイールで遠近 · 尊に触れて詳らかに',
   hintFP: 'ドラッグで環顧 · WASD で壇中を行く · Esc で出壇',
   hintKan: '軽く触れて進む · 観に促しなし · Esc で出観',

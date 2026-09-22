@@ -61,7 +61,7 @@ Object.assign(OBSERVATION_LABELS.zh, { monk: '僧相', flying: '飛行', 'half-b
 Object.assign(OBSERVATION_LABELS.en, { monk: 'Monastic figure', flying: 'Flying', 'half-body': 'Supporting half-figure' });
 Object.assign(OBSERVATION_LABELS.ja, { monk: '僧形', flying: '飛行', 'half-body': '半身で支える像' });
 const BOOK_TEXT = {
-  zh: { title: '金胎不二 · 兩界現圖', back: '形變演示 →', notice: '依《曼荼羅之研究》上下冊校正。點選尊位可查尊名、形相與書頁出典。',
+  zh: { title: '兩界現圖 · 校對頁', back: '← 金胎不二', notice: '內部校對用：依《曼荼羅之研究》上下冊逐席對照名位、形相與書頁出典；壇城本體在首頁。',
     pending: '書據已核對', 'text-attested': '書載名位', legend: '尊形 · 標幟 · 點選查出典',
     sourceNote: '栂尾祥雲原著、吳信如主編《曼荼羅之研究》，中國藏學出版社，2011 年 6 月。各席保留書據；程序造像的正式核定仍由人工。',
     temple: '校正記錄', catalogueSource: '西院照片初錄', coords: '圖式位置', observations: '依所列書頁校對；同名異院、異會分席記錄。',
@@ -70,7 +70,7 @@ const BOOK_TEXT = {
     source: '書頁出典', pdf: 'PDF 頁', right: '尊之右手', left: '尊之左手', mudra: '印相', color: '身色', mount: '乘座', alternative: '書內異說',
     drawing: '程序造像', detail: '逐尊查閱', catalogue: '諸尊名錄', intro: '點選圖中尊位，或依院會、尊名檢索。',
   },
-  en: { title: 'Ryōbu Mandala · Sourced Diagram', back: 'Morphing study →', notice: 'Revised against The Study of Mandalas, Chinese edition, 2011. Select a seat for its identity, form and book references.',
+  en: { title: 'Sourced Diagram · Proofing Page', back: '← Ryōbu Mandala', notice: 'Internal proofing page: every seat checked against The Study of Mandalas, Chinese edition, 2011. Select a seat for its identity, form and book references; the mandala itself is the home page.',
     pending: 'Book references checked', 'text-attested': 'Book-attested', legend: 'Figures · Emblems · Select for sources',
     sourceNote: 'Toganoo Shōun, edited by Wu Xinru, The Study of Mandalas, China Tibetology Press, June 2011. Per-seat sources are recorded; procedural drawings retain a separate human iconographic approval stage.',
     temple: 'Revision record', catalogueSource: 'Saiin photo inventory', coords: 'Diagram position', observations: 'Checked against the cited pages. Repeated deities retain distinct seats.',
@@ -79,7 +79,7 @@ const BOOK_TEXT = {
     source: 'Book reference', pdf: 'PDF page', right: 'Deity’s right', left: 'Deity’s left', mudra: 'Gesture', color: 'Body colour', mount: 'Mount', alternative: 'Source variants',
     drawing: 'Drawing', detail: 'Inspect a deity', catalogue: 'Deity catalogue', intro: 'Select a seat or search by name or assembly.',
   },
-  ja: { title: '金胎不二 · 両界現図', back: '形変の展示 →', notice: '『曼荼羅之研究』上下巻（2011年中国語版）により校正。尊位を選ぶと尊名・形相・出典頁を確認できます。',
+  ja: { title: '両界現図 · 校正頁', back: '← 金胎不二', notice: '内部校正用：『曼荼羅之研究』上下巻（2011年中国語版）に尊位を逐一対照。尊位を選ぶと尊名・形相・出典頁を確認できます。壇城本体はトップページ。',
     pending: '書籍の根拠を照合済み', 'text-attested': '書載の名位', legend: '尊形 · 標幟 · 選択して出典を確認',
     sourceNote: '栂尾祥雲原著・呉信如主編『曼荼羅之研究』、中国蔵学出版社、2011年6月。各席に書籍の根拠を記録。描画の正式な図像学的確定は別途、人が行います。',
     temple: '校正記録', catalogueSource: '西院写真の初録', coords: '図式の位置', observations: '記載の書籍頁と照合。同名でも院・会が違う尊は別席として記録。',
@@ -379,7 +379,7 @@ $('more-seats').addEventListener('click', () => { limit += 60; updateList(); });
 $('zoom-in').addEventListener('click', () => zoomAt(1.4)); $('zoom-out').addEventListener('click', () => zoomAt(1 / 1.4)); $('fit-view').addEventListener('click', fit);
 $('edition-source').href = bookMode ? MANDALA_EDITION.catalogueUrl : SAIIN_EDITION.templeUrl;
 $('catalogue-source').href = bookMode ? 'saiin.html' : SAIIN_EDITION.catalogueUrl;
-if (bookMode) $('back-link').href = 'engine.html';
+if (bookMode) $('back-link').href = 'index.html';
 new ResizeObserver(() => {
   const previousScale = baseScale();
   const rect = $('canvas-wrap').getBoundingClientRect(); width = rect.width; height = rect.height;

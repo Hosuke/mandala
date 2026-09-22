@@ -51,7 +51,7 @@ export function initUI(h, T0, langKey0 = 'zh') {
   $('btn-reset').addEventListener('click', () => h.onReset());
   $('btn-genten').addEventListener('click', () => h.onGenten());
   $('btn-saiin').addEventListener('click', () => {
-    window.location.assign(`index.html?realm=${Number(lambda.value) < 500 ? 't' : 'k'}`);
+    window.location.assign(`book.html?realm=${Number(lambda.value) < 500 ? 't' : 'k'}`);
   });
   $('genten-close').addEventListener('click', () => api.closeGenten());
   $('info-close').addEventListener('click', () => api.hideInfo());
