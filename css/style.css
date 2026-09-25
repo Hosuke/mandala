@@ -68,7 +68,7 @@ html, body {
 #title {
   position: fixed;
   top: 34px;
-  right: 36px;
+  right: 94px; /* 讓法具欄（right 36 + 寬 42）之位，免「收」鈕壓題簽 */
   z-index: 22;
   writing-mode: vertical-rl;
   pointer-events: none;
@@ -196,8 +196,8 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
 #controls.folded button:nth-child(9) { transition-delay: .14s; }
 #controls.folded button:nth-child(10) { transition-delay: .16s; }
 
-/* 短屏之制：鈕形漸縮，俾十鈕不溢 */
-@media (max-height: 860px) {
+/* 短屏之制：鈕形漸縮，俾十鈕不溢（900 高之筆電亦在此列） */
+@media (max-height: 960px) {
   #controls { gap: 9px; }
   #controls button {
     font-size: 14px;
@@ -752,10 +752,10 @@ body.advaya #realm-name { color: var(--gold); text-shadow: 0 0 18px rgba(216,179
 }
 
 @media (max-width: 720px) {
-  #title { top: 22px; right: 20px; }
+  #title { top: 22px; right: 66px; }
   #title h1 { font-size: 23px; }
   #realm { top: 22px; left: 22px; }
   #controls { right: 20px; }
   #info { left: 16px; width: 218px; }
-  #slider-wrap { width: 74vw; bottom: 30px; }
+  #slider-wrap { width: calc(100vw - 128px); bottom: 30px; } /* 右讓法具欄 */
 }

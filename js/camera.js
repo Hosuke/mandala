@@ -43,12 +43,31 @@ export class Rig {
   _bind() {
     const el = this.dom;
     let dragging = false, px = 0, py = 0;
+    // 雙指遠近：觸屏無滾輪，以兩指之距代之。一觸既成雙指，至全放皆不作點擇
+    const pts = new Map();
+    let pinchDist = 0;
+    const spread = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    this.multiTouch = false;
     el.addEventListener('pointerdown', e => {
-      dragging = true; px = e.clientX; py = e.clientY;
+      if (!pts.size) this.multiTouch = false;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { this.multiTouch = true; pinchDist = spread(); }
+      dragging = pts.size === 1; px = e.clientX; py = e.clientY;
       el.setPointerCapture(e.pointerId);
       this.idleTime = 0;
     });
     el.addEventListener('pointermove', e => {
+      const p = pts.get(e.pointerId);
+      if (p) { p.x = e.clientX; p.y = e.clientY; }
+      if (pts.size === 2) {
+        const d = spread();
+        if (pinchDist > 0 && d > 0 && this.mode === 'aerial') {
+          this.radius = THREE.MathUtils.clamp(this.radius * pinchDist / d, 26, 150);
+        }
+        pinchDist = d;
+        this.idleTime = 0;
+        return;
+      }
       if (!dragging) return;
       const dx = (e.clientX - px) / el.clientWidth;
       const dy = (e.clientY - py) / el.clientHeight;
@@ -62,7 +81,11 @@ export class Rig {
         this.pitch = THREE.MathUtils.clamp(this.pitch - dy * 2.2, -1.2, 1.2);
       }
     });
-    const release = () => { dragging = false; };
+    const release = e => {
+      pts.delete(e.pointerId);
+      if (pts.size === 2) pinchDist = spread(); // 三指減為雙指，重立距基，免驟縮
+      dragging = false; // 雙指餘一指，不續旋，免跳
+    };
     el.addEventListener('pointerup', release);
     el.addEventListener('pointercancel', release);
     el.addEventListener('lostpointercapture', release);

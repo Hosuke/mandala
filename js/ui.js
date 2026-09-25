@@ -15,6 +15,9 @@ export function initUI(h, T0, langKey0 = 'zh') {
   const btnEnter = $('btn-enter');
   const btnFold = $('btn-fold');
   const controls = $('controls');
+  // 觸屏（粗指）之提示另取其語：無滾輪、無 WASD、無 Esc
+  const touch = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  const hint = key => (touch && T[key + 'Touch']) || T[key];
 
   // 法具欄之收展：記於 localStorage；無所記而屏短（<700）者，初即收之
   let folded = false;
@@ -110,7 +113,7 @@ export function initUI(h, T0, langKey0 = 'zh') {
     enterUI(entered) {
       btnEnter.textContent = entered ? T.exit : T.enter;
       btnEnter.classList.toggle('lit', entered);
-      $('hint').textContent = entered ? T.hintFP : T.hintAerial;
+      $('hint').textContent = entered ? hint('hintFP') : hint('hintAerial');
     },
 
     showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra, mantraSid, genten, figureNote }) {
@@ -224,7 +227,7 @@ export function initUI(h, T0, langKey0 = 'zh') {
     kanUI(active) {
       $('btn-kan').textContent = active ? T.kanExit : T.kan;
       $('btn-kan').classList.toggle('lit', active);
-      if (active) $('hint').textContent = T.hintKan;
+      if (active) $('hint').textContent = hint('hintKan');
     },
 
     flash() {

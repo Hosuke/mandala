@@ -709,7 +709,8 @@ async function boot() {
   }
   canvas.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
   canvas.addEventListener('pointermove', e => {
-    if (goso.active || kanTimer) {
+    // 觸屏無 hover：指過不留懸名（否則放指後殘留）；點擇於 pointerup 臨點求交
+    if (goso.active || kanTimer || e.pointerType === 'touch') {
       hovered = null;
       canvas.style.cursor = '';
       ui.tooltip(0, 0, null);
@@ -723,7 +724,7 @@ async function boot() {
     if (!downAt) return;
     const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
     downAt = null;
-    if (moved > 6) return;
+    if (moved > 6 || rig.multiTouch) return; // 雙指遠近，非點擇
     if (goso.active) { goso.advance(); return; } // 觀中輕觸即進
     if (kanTimer) return; // 入坐未定，不拾
     const ref = pickAt(e.clientX, e.clientY); // 觸屏無 hover，臨點即求交
