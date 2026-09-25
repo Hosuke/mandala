@@ -17,6 +17,7 @@ export class Rig {
     this.theta = Math.PI * 1.5; // 自南方望北
     this.phi = 0.62;            // 自天頂之傾角
     this.radius = 86;
+    this.frameScale = 1; // 取景隨形：壇之幅（胎藏為 1）乘於 radius，主迴圈按形變緩推
     this.target = new THREE.Vector3(0, 0, 0);
 
     // 遍歷時的聚焦覆寫
@@ -145,7 +146,7 @@ export class Rig {
       if (this.idleTime > 5 && !this.focusOverride) this.theta += dt * 0.018; // 靜時壇城微轉
       const f = this.focusOverride;
       const target = f ? f.target : this.target;
-      const radius = f ? f.radius : this.radius;
+      const radius = f ? f.radius : this.radius * this.frameScale;
       const phi = f ? (f.phi ?? this.phi) : this.phi;
       dEye = new THREE.Vector3(
         target.x + radius * Math.sin(phi) * Math.cos(this.theta),

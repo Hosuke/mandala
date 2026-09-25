@@ -287,6 +287,7 @@ async function boot() {
       echoes.push(echo);
     }
   }
+  const echoExtent = Math.max(0, ...echoes.map(e => Math.hypot(e.group.position.x, e.group.position.z)));
   const echoMulByKey = {};
   for (const e of echoes) echoMulByKey[e.assembly.key] = e.groupMul;
 
@@ -862,6 +863,8 @@ async function boot() {
     return smoothstep(node.delay, node.delay + 0.8, state.lambda);
   }
 
+  let fogScale = 1;
+  const baseExtent = Math.max(...nodes.filter(n => n.hasT).map(n => n.rT)); // 胎藏之幅為取景之本
   const clock = new THREE.Clock();
   let elapsed = 0;
 
@@ -898,7 +901,8 @@ async function boot() {
       for (const [d, side] of batch) nodeTex(d, side);
     }
 
-    // 真身
+    // 真身（兼量壇之現幅，以供取景）
+    let extent = 0;
     for (const n of nodes) {
       const eff = effLambda(n);
       // 極座標插值：半徑與角度各自緩進，節點循弧收束／綻放，不對穿壇心
@@ -914,6 +918,7 @@ async function boot() {
       n.group.position.set(px, 0.6, pz);
       let opBase = n.hasT && n.hasK ? 1 : (n.hasT ? 1 - eff : eff);
     if (n.seat?.stub) opBase *= 0.66;                      // 席身如暗星：主尊亮而眷屬淡
+      if (opBase > 0.3 && r > extent) extent = r;
       if (n.kodoOnly) opBase = kodoMix;                      // 缺尊唯於講堂現
       else if (!n.kodoPos) opBase *= 1 - kodoMix;            // 非廿一尊者隱
       else opBase += (1 - opBase) * kodoMix;                 // 壇上成員全顯
@@ -1017,6 +1022,21 @@ async function boot() {
         Math.max(0.25, bondNode.mesh.material.opacity);
       bondGlow.scale.setScalar(bondNode.mesh.scale.x * 1.9 + Math.sin(elapsed * 2.2) * 0.4);
     }
+
+    // 取景隨形：形變中壇幅漲縮（不二之際收束，金剛九會外展），鏡距隨之，令壇恆滿幅。
+    // 講堂另有其鏡，不與焉
+    // 九會之回響不在 nodes，其幅以 echoFade 計入（成身會居中，八會環之）
+    // 回響之幅按其可見與否計（非按其透明度縮放幾何）；初現即取全幅，免淡入時鏡反近而八會出框。
+    // 方陣之角遠於其邊，略收 0.85 使九會滿幅
+    extent = Math.max(extent, echoExtent * 0.85 * smoothstep(0, 0.2, echoFade));
+    // 豎屏橫幅窄：九會方陣須更遠方盡見（胎藏之圓於手機原即略溢兩側，保其沉浸，不加）
+    const portrait = camera.aspect < 1 ? 1 + (Math.min(1.55, 1 / Math.sqrt(camera.aspect)) - 1) * echoFade : 1;
+    const fit = kodoMix > 0.01 || !extent ? 1 : THREE.MathUtils.clamp(extent / baseExtent * portrait, 0.62, 2.2);
+    rig.frameScale = damp(rig.frameScale, fit, 2.2, dt);
+    // 鏡遠則霧薄，壇之明度不因退步而暗；唯俯瞰且無聚焦覆寫（實用 frameScale）時補之
+    const fogFit = rig.mode === 'aerial' && !rig.focusOverride ? rig.frameScale : 1;
+    fogScale = damp(fogScale, fogFit, 2.2, dt);
+    scene.fog.density = 0.0042 / fogScale;
 
     dust.points.material.opacity = 0.45 * Math.max(kanDim, 0.35); // 觀中砂子猶在，如念之餘
     dust.update(dt, elapsed);
@@ -1130,7 +1150,7 @@ function makeLabelSprite(text, pos, h) {
   const H = h ?? [...text].length * 1.5 + 1;
   sp.scale.set(H * tex.userData.aspect, H, 1);
   sp.position.copy(pos);
-  sp.renderOrder = 6;
+  sp.renderOrder = 3; // 題記居諸尊之下：尊不寫深度，唯序定遮掩，序高則遠字穿近尊
   return sp;
 }
 
