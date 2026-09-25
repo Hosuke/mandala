@@ -1,0 +1,3 @@
+/* 先於 style.css：Chrome 61 不識 min() 者，取此回退；新核由 style.css 之 min() 覆之 */
+#slider-wrap { width: 62vw; max-width: 520px; }
+#caption { width: 78vw; max-width: 620px; }

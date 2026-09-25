@@ -1,0 +1,69 @@
+/* 後於 style.css：小工具專用之收束，主線不動 */
+
+/* 悉曇真形改載 woff2（容器字型唯 woff/woff2） */
+@font-face {
+  font-family: "Noto Sans Siddham";
+  src: url("./fonts/NotoSansSiddham-Regular.woff2") format("woff2");
+  font-display: block;
+}
+
+/* 網頁版專有之考據／校對入口，小工具不載 */
+#btn-saiin, #btn-genten, #genten-view, #info-genten { display: none !important; }
+
+body { -webkit-touch-callout: none; }
+html { touch-action: manipulation; }
+
+/* Flex gap 基線：子項 margin；行為檢測通過者（.supports-flex-gap）去之 */
+html:not(.supports-flex-gap) #controls > * + * { margin-top: 14px; }
+html:not(.supports-flex-gap) #slider-wrap > * + * { margin-left: 18px; }
+html:not(.supports-flex-gap) #langs > * + * { margin-left: 4px; }
+html:not(.supports-flex-gap) #loading > * + * { margin-top: 18px; }
+@media (max-height: 860px) { html:not(.supports-flex-gap) #controls > * + * { margin-top: 9px; } }
+@media (max-height: 700px) { html:not(.supports-flex-gap) #controls > * + * { margin-top: 6px; } }
+html:not(.supports-flex-gap) #controls.folded > * + * { margin-top: 0; }
+html:not(.supports-flex-gap) #controls.folded > .primary { margin-top: 9px; }
+
+/* 安全區：真機 env()，模擬器注入變量 */
+#title { margin-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)); }
+#realm { margin-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)); }
+#slider-wrap { margin-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)); }
+
+/* 結緣之證 · 存冊／發筆記 */
+#mt-card-sheet {
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 90;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(6, 9, 18, .86);
+}
+#mt-card-sheet .panel {
+  width: 82vw; max-width: 380px;
+  padding: 16px 16px calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  text-align: center;
+}
+#mt-card-sheet img { display: block; width: 100%; height: auto; max-height: 68vh; object-fit: contain; }
+#mt-card-sheet p { margin: 12px 0 0; color: var(--ink-soft); font-size: 14px; }
+#mt-card-sheet .actions { display: flex; justify-content: center; margin-top: 16px; }
+#mt-card-sheet button {
+  margin: 0 5px; padding: 10px 12px;
+  font: inherit; font-size: 15px; letter-spacing: .12em; white-space: nowrap;
+  color: var(--kon-deep); background: var(--gold);
+  border: 1px solid var(--gold); border-radius: 2px;
+}
+#mt-card-sheet button.ghost { color: var(--gold); background: transparent; }
+
+#mt-toast {
+  position: fixed; left: 50%; bottom: 96px; z-index: 95;
+  transform: translateX(-50%);
+  padding: 8px 16px; border-radius: 2px;
+  color: var(--moon); background: rgba(10, 14, 26, .92);
+  border: 1px solid var(--gold-faint);
+  font-size: 14px; letter-spacing: .12em;
+  opacity: 0; transition: opacity .3s; pointer-events: none;
+}
+#mt-toast.show { opacity: 1; }
+
+#mt-lost {
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 99;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); background: var(--kon-deep);
+  font-size: 18px; letter-spacing: .3em;
+}
