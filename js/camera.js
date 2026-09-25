@@ -112,9 +112,11 @@ export class Rig {
   }
 
   enter() {
-    // 立於南與東南兩葉之間的空當，面向壇心
-    const a = 292.5 * Math.PI / 180, r = 10.2;
-    this.enterAt(new THREE.Vector3(Math.cos(a) * r, 2.5, -Math.sin(a) * r));
+    // 立於南與東南兩葉之方位、退至初重院之內（八葉 6.2 與初重 13 之間偏外），
+    // 眼略高而微俯：八葉九尊一目環列，大日居中，不為近葉遮其大半
+    const a = 292.5 * Math.PI / 180, r = 15.5;
+    this.enterAt(new THREE.Vector3(Math.cos(a) * r, 4.2, -Math.sin(a) * r));
+    this.pitch = -0.12;
   }
 
   enterAt(pos) {

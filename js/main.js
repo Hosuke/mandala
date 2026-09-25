@@ -157,6 +157,10 @@ async function boot() {
   scene.fog = new THREE.FogExp2(0x070a13, 0.0042);
 
   const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, 0.1, 600);
+  // 豎屏橫視角窄：縱視角隨之略放（46°→至多約 58°），入壇與俯瞰皆不致只見一尊
+  function fitFov() { camera.fov = camera.aspect < 1 ? 46 + (1 - camera.aspect) * 22 : 46; }
+  fitFov();
+  camera.updateProjectionMatrix();
   const rig = new Rig(camera, canvas);
 
   // ── 地 ──
@@ -167,7 +171,7 @@ async function boot() {
   scene.add(dust.points);
 
   // 真身之相：隨 state.form 取紋理（緩生，cache 內恆存）
-  function nodeTex(d, side) {
+  function nodeTex(d, side, hi = false) {
     const a = side === 't' ? d.t : d.k;
     const lord = d.id === 'center' || d.k?.slot === 'lord' || d.t?.court === 'chudai';
     // 尊形／三昧耶乃粉本專筆之相，數百細筆非 256 幅所能容（一指僅合 1.3px），
@@ -178,7 +182,8 @@ async function boot() {
       id: `${d.id}|${side}`, zh: a.zh, bija: a.bija, sid: siddham(a.bija),
       samaya: d.samaya, color: FAMILY_COLOR[d.family], form: state.form,
       chiken: state.form === 'figure' && d.id === 'center' && side === 'k',
-      res: lord ? (fine ? 768 : 384) : (fine ? 512 : 256), // 中尊大相，幅加倍以求精細
+      // 中尊大相，幅加倍以求精細；hi＝近觀升幅（屏上之尺逾紋之幅則倍之，至多 1024）
+      res: Math.min(1024, (lord ? (fine ? 768 : 384) : (fine ? 512 : 256)) * (hi ? 2 : 1)),
     });
   }
 
@@ -326,6 +331,34 @@ async function boot() {
   pulse.position.y = 0.35;
   pulse.renderOrder = 2;
   scene.add(pulse);
+
+  // ── 不二之際 ──
+  // 壇心金光：隨形變呈鐘形，正中最明（結構兩投影重合之處）；
+  // 相融之波：滑尺越中點之刻，自壇心一環金光外漾，至壇之外緣而盡——一次，不復。
+  // 平鋪於地（立之則為地所截，現硬邊）：光自壇心之地生起
+  const advayaGlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({
+      map: glowTexture(0xf4e0a8), transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, opacity: 0,
+    }),
+  );
+  advayaGlow.rotation.x = -PI / 2;
+  advayaGlow.position.y = 0.32;
+  advayaGlow.renderOrder = 5;
+  scene.add(advayaGlow);
+  const advayaWave = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({
+      map: ringTexture(), transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, opacity: 0,
+    }),
+  );
+  advayaWave.rotation.x = -PI / 2;
+  advayaWave.position.y = 0.3;
+  advayaWave.renderOrder = 2;
+  scene.add(advayaWave);
+  let waveT = -1, lastSide = -1; // 開壇於胎藏（λ=0）
 
   // ── 投花得佛 ──
   const petals = [];
@@ -864,6 +897,9 @@ async function boot() {
   }
 
   let fogScale = 1;
+  const lodV = new THREE.Vector3();
+  const HI_CAP = 40;   // 同時升幅之尊至多四十（1024² 者約 4MiB，合 LRU 預算有餘）
+  let hiCount = 0;
   const baseExtent = Math.max(...nodes.filter(n => n.hasT).map(n => n.rT)); // 胎藏之幅為取景之本
   const clock = new THREE.Clock();
   let elapsed = 0;
@@ -902,7 +938,9 @@ async function boot() {
     }
 
     // 真身（兼量壇之現幅，以供取景）
-    let extent = 0;
+    let extent = 0, upgrades = 0;
+    const tanV = Math.tan(camera.fov * PI / 360), tanH = tanV * camera.aspect;
+    const pxPerUnit = renderer.domElement.height / (2 * tanV);
     for (const n of nodes) {
       const eff = effLambda(n);
       // 極座標插值：半徑與角度各自緩進，節點循弧收束／綻放，不對穿壇心
@@ -929,7 +967,19 @@ async function boot() {
       n.hover = damp(n.hover, hovered === n ? 1 : 0, 10, dt);
       n.mesh.material.opacity = opBase * n.mul * kanDim;
       const sideNow = n.hasT && n.hasK ? (eff < 0.5 ? 't' : 'k') : (n.hasT ? 't' : 'k');
-      const want = nodeTex(n.d, sideNow);
+      // 近觀升幅：以上一幀之尺與立起後之位（視深）估其屏上像素，逾本幅則換倍幅之紋，
+      // 遠去乃復（滯回免抖）。唯可見且在鏡前者升；每幀限三，全壇升幅者不逾 HI_CAP，
+      // 免 LRU 預算內反覆逐繪
+      lodV.set(px, 0.6 + stand * n.mesh.scale.x * 0.5, pz).applyMatrix4(camera.matrixWorldInverse);
+      const depth = -lodV.z;
+      const rad = n.mesh.scale.x * 0.5;   // 盤之半徑：與視錐相交即算在鏡中
+      const seen = n.mesh.material.opacity > 0.05 && depth > 0.3 &&
+        Math.abs(lodV.x) < depth * tanH + rad && Math.abs(lodV.y) < depth * tanV + rad;
+      const onScreen = seen ? n.mesh.scale.x * pxPerUnit / depth : 0;
+      const baseRes = n.mesh.material.map?.image?.width / (n.hi ? 2 : 1) || 256;
+      if (!n.hi && onScreen > baseRes * 1.1 && upgrades < 3 && hiCount < HI_CAP) { n.hi = true; upgrades++; hiCount++; }
+      else if (n.hi && onScreen < baseRes * 0.7) { n.hi = false; hiCount--; }
+      const want = nodeTex(n.d, sideNow, n.hi);
       if (n.mesh.material.map !== want) n.mesh.material.map = want;
       // 不二之際，兩部同體之錨點微明而脹——結構於中途可見
       const advaya = n.hasT && n.hasK ? Math.max(0, 1 - Math.abs(l - 0.5) * 2.6) : 0;
@@ -970,8 +1020,10 @@ async function boot() {
 
     // 莊嚴
     const notKodo = 1 - kodoMix;
-    for (const m of taizoDecor.mats) m.m.opacity = m.base * taizoFade * kanDim * notKodo;
-    for (const m of kongoDecor.mats) m.m.opacity = m.base * kongoFade * kanDim * notKodo;
+    // 院會題記乃俯瞰讀圖之榜，入壇則遠字漂於近尊之間，淡之（線不淡，仍為地之界）
+    const labelK = 1 - 0.88 * stand;
+    for (const m of taizoDecor.mats) m.m.opacity = m.base * taizoFade * kanDim * notKodo * (m.m.isSpriteMaterial ? labelK : 1);
+    for (const m of kongoDecor.mats) m.m.opacity = m.base * kongoFade * kanDim * notKodo * (m.m.isSpriteMaterial ? labelK : 1);
     for (const m of kodoDecor.mats) m.m.opacity = m.base * kodoMix * kanDim;
     edgesT.update(nodeByKey);
     edgesT.lines.material.opacity = 0.15 * taizoFade * kanDim * notKodo;
@@ -1023,6 +1075,26 @@ async function boot() {
       bondGlow.scale.setScalar(bondNode.mesh.scale.x * 1.9 + Math.sin(elapsed * 2.2) * 0.4);
     }
 
+    // 不二之際：金光與相融之波
+    const bellL = Math.max(0, 1 - Math.abs(l - 0.5) * 2.2);
+    advayaGlow.material.opacity = 0.32 * bellL * bellL * kanDim * (1 - kodoMix);
+    advayaGlow.scale.set(26 + 10 * bellL, 26 + 10 * bellL, 1);
+    // 以末次非零之側為準：滑尺吸附恰於 0.5 而停，續行仍能判其越中
+    const sideL = Math.sign(l - 0.5);
+    if (sideL && lastSide && sideL !== lastSide && waveT < 0 && kodoMix < 0.01) {
+      waveT = 0;
+      if (bell.ready() && !bell.isMuted()) bell.strike(bell.FAMILY_FREQ.butsu * 0.75, { gain: 0.07 }); // 大日之磬，輕之
+    }
+    if (sideL) lastSide = sideL;
+    if (waveT >= 0) {
+      waveT += dt / 2.6;
+      const k = Math.min(1, waveT);
+      const ease = 1 - Math.pow(1 - k, 3);
+      advayaWave.scale.setScalar(4 + ease * baseExtent * 2.3);
+      advayaWave.material.opacity = 0.5 * (1 - k) * (1 - k) * kanDim;
+      if (k >= 1) { waveT = -1; advayaWave.material.opacity = 0; }
+    }
+
     // 取景隨形：形變中壇幅漲縮（不二之際收束，金剛九會外展），鏡距隨之，令壇恆滿幅。
     // 講堂另有其鏡，不與焉
     // 九會之回響不在 nodes，其幅以 echoFade 計入（成身會居中，八會環之）
@@ -1059,6 +1131,7 @@ async function boot() {
 
   addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight;
+    fitFov();
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
   });
