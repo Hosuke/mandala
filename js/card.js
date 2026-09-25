@@ -17,6 +17,7 @@ function placeInk(ctx, s, x, y) {
   } else {
     // 退化保底：em-box 居中，字不至於不畫
     ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; // 舊核無 actualBoundingBox，此處仍 left 則字偏右
     ctx.fillText(s, x, y);
   }
   ctx.textAlign = 'center';

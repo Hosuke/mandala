@@ -48,6 +48,13 @@ export class Rig {
     let pinchDist = 0;
     const spread = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
     this.multiTouch = false;
+    // 模態將覆：撤諸進行中之手勢與指捕，免背後續旋續縮
+    this.cancelGestures = () => {
+      for (const id of pts.keys()) { try { el.releasePointerCapture(id); } catch { /* 已釋 */ } }
+      pts.clear();
+      dragging = false;
+      this.multiTouch = true; // 至全放皆不作點擇
+    };
     el.addEventListener('pointerdown', e => {
       if (!pts.size) this.multiTouch = false;
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });

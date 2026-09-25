@@ -500,6 +500,10 @@ async function boot() {
       ui.openGenten(gentenGallery());
     },
     onGentenClose() { rig.inputBlocked = false; }, // 諸關閉路徑統一解相機閘
+    onGuide(open) { // 導與帖不相疊（帖開則不導），故閉導時唯帖未開方解閘
+      rig.inputBlocked = open || ui.gentenOpen();
+      if (open) { rig.keys.clear(); rig.cancelGestures(); downAt = null; }
+    },
     onEscape() {
       if (goso?.active || kanTimer) { exitKan(); return; }
       cancelToss();
@@ -1039,8 +1043,11 @@ async function boot() {
     renderer.setSize(innerWidth, innerHeight);
   });
 
+  // 著色器預編：首幀編譯之頓（數秒）挪入開壇幕後，揭幕即可操作
+  try { await renderer.compileAsync(scene, camera); } catch { /* 舊器無之，首幀自編 */ }
   frame();
   ui.hideLoading();
+  setTimeout(() => ui.maybeGuide(), 1600); // 待開壇之幕淡盡
 }
 
 // ── 尺度 ────────────────────────────────────────────────────────────────────

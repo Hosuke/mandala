@@ -19,18 +19,20 @@ export function initUI(h, T0, langKey0 = 'zh') {
   const touch = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
   const hint = key => (touch && T[key + 'Touch']) || T[key];
 
-  // 法具欄之收展：記於 localStorage；無所記而屏短（<700）者，初即收之
+  // 法具欄之收展：記於 localStorage；無所記而屏短（<700）或屏窄（手機）者，初即收之。
+  // 收時唯留主鈕（.primary：轉相・入壇・投花・復觀），餘者入「具」
+  const compact = () => window.innerHeight < 700 || window.innerWidth <= 720;
   let folded = false;
   try {
     const saved = localStorage.getItem('mandala-fold');
-    folded = saved !== null ? saved === '1' : window.innerHeight < 700;
-  } catch { folded = window.innerHeight < 700; /* 私隱模式 */ }
+    folded = saved !== null ? saved === '1' : compact();
+  } catch { folded = compact(); /* 私隱模式 */ }
   const applyFold = () => {
     controls.classList.toggle('folded', folded);
     btnFold.textContent = folded ? T.fold : T.unfold; // 收則示「具」，招人啟之
     btnFold.classList.toggle('lit', folded);
     // 收起者亦絕鍵焦——目不可及，鍵亦不可及
-    controls.querySelectorAll('button:not(#btn-fold)').forEach(b => {
+    controls.querySelectorAll('button:not(#btn-fold):not(.primary)').forEach(b => {
       b.tabIndex = folded ? -1 : 0;
       b.setAttribute('aria-hidden', folded ? 'true' : 'false');
     });
@@ -58,12 +60,61 @@ export function initUI(h, T0, langKey0 = 'zh') {
   });
   $('genten-close').addEventListener('click', () => api.closeGenten());
   $('info-close').addEventListener('click', () => api.hideInfo());
+
+  // 手機底板：於頂端下滑即收
+  let sheetY = null;
+  info.addEventListener('touchstart', e => {
+    sheetY = info.scrollTop <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null;
+  }, { passive: true });
+  info.addEventListener('touchmove', e => {
+    if (sheetY === null || !matchMedia('(max-width: 560px)').matches) return;
+    if (e.touches[0].clientY - sheetY > 60) { sheetY = null; api.hideInfo(); }
+  }, { passive: true });
+
+  // 長按法具：觸屏無懸停，長按即示其義（放指不觸發本鈕）
+  const pressTip = $('press-tip');
+  let pressTimer = 0, pressHide = 0, pressFired = false;
+  const showPressTip = b => {
+    const r = b.getBoundingClientRect();
+    pressTip.textContent = b.title;
+    pressTip.style.right = `${Math.round(innerWidth - r.left + 10)}px`;
+    pressTip.style.top = `${Math.round(r.top + r.height / 2)}px`;
+    pressTip.classList.remove('hidden');
+    clearTimeout(pressHide);
+    pressHide = setTimeout(() => pressTip.classList.add('hidden'), 2600);
+  };
+  controls.addEventListener('pointerdown', e => {
+    const b = e.target.closest('button');
+    pressFired = false;
+    if (!b || e.pointerType === 'mouse' || !b.title) return;
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => { pressFired = true; showPressTip(b); }, 480);
+  });
+  const cancelPress = () => clearTimeout(pressTimer);
+  controls.addEventListener('pointerup', cancelPress);
+  controls.addEventListener('pointercancel', cancelPress);
+  controls.addEventListener('pointerleave', cancelPress);
+  controls.addEventListener('contextmenu', e => e.preventDefault());
+  controls.addEventListener('click', e => {
+    if (pressFired) { pressFired = false; e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
+
+  // 提示：初顯明，一經操作即淡；轉模式則復明
+  const hintEl = $('hint');
+  document.getElementById('gl').addEventListener('pointerdown', () => hintEl.classList.add('quiet'));
+  const setHint = text => { hintEl.textContent = text; hintEl.classList.remove('quiet'); };
   $('info-card').addEventListener('click', () => h.onCard());
   $('bond-line').addEventListener('click', () => h.onBondClick());
   document.querySelectorAll('#langs button').forEach(b =>
     b.addEventListener('click', () => h.onLang(b.dataset.lang)));
 
   window.addEventListener('keydown', e => {
+    // 初見之導亦為模態：Esc 閉之，Tab 困於其鈕，餘鍵（含 Space 觸鈕之默認）不擾背後
+    if (guideOpen()) {
+      if (e.code === 'Escape') closeGuide();
+      else if (e.code === 'Tab') { e.preventDefault(); $('guide-close').focus(); }
+      return;
+    }
     // 原典帖開啟時為模態：唯 Esc 關之，其餘快捷鍵吞下，不擾背後壇城
     if (api.gentenOpen()) {
       if (e.code === 'Escape') api.closeGenten();
@@ -76,6 +127,23 @@ export function initUI(h, T0, langKey0 = 'zh') {
   });
 
   let captionTimer = null;
+
+  // 初見之導之開閉（maybeGuide 開之）。有指／鍵按住（拖尊、拖滑尺）則俟全放乃導，不截手勢
+  const pressed = new Set();
+  addEventListener('pointerdown', e => pressed.add(e.pointerId), true);
+  for (const t of ['pointerup', 'pointercancel']) addEventListener(t, e => pressed.delete(e.pointerId), true);
+  let guideReturnFocus = null;
+  const guideOpen = () => !$('guide').classList.contains('hidden');
+  function closeGuide() {
+    if (!guideOpen()) return;
+    $('guide').classList.add('hidden');
+    $('guide').setAttribute('aria-hidden', 'true');
+    h.onGuide?.(false);
+    try { localStorage.setItem('mandala-guided', '1'); } catch { /* 私隱模式 */ }
+    if (guideReturnFocus?.focus) guideReturnFocus.focus();
+  }
+  $('guide-close').addEventListener('click', closeGuide);
+  $('guide').addEventListener('click', e => { if (e.target === $('guide')) closeGuide(); });
 
   const api = {
     setLambda(v) { lambda.value = Math.round(v * 1000); },
@@ -113,7 +181,7 @@ export function initUI(h, T0, langKey0 = 'zh') {
     enterUI(entered) {
       btnEnter.textContent = entered ? T.exit : T.enter;
       btnEnter.classList.toggle('lit', entered);
-      $('hint').textContent = entered ? hint('hintFP') : hint('hintAerial');
+      setHint(entered ? hint('hintFP') : hint('hintAerial'));
     },
 
     showInfo({ bija, bijaRoman, name, sk, family, familyColor, loc, desc, mantra, mantraSid, genten, figureNote }) {
@@ -227,7 +295,7 @@ export function initUI(h, T0, langKey0 = 'zh') {
     kanUI(active) {
       $('btn-kan').textContent = active ? T.kanExit : T.kan;
       $('btn-kan').classList.toggle('lit', active);
-      if (active) $('hint').textContent = hint('hintKan');
+      if (active) setHint(hint('hintKan'));
     },
 
     flash() {
@@ -285,6 +353,31 @@ export function initUI(h, T0, langKey0 = 'zh') {
     },
 
     hideLoading() { $('loading').classList.add('done'); },
+
+    // 初見之導：列法具諸鈕及其義；見過即記，不復出
+    maybeGuide() {
+      try { if (localStorage.getItem('mandala-guided')) return; } catch { return; }
+      if (pressed.size) { setTimeout(() => api.maybeGuide(), 600); return; }
+      const list = $('guide-list');
+      list.textContent = '';
+      for (const b of controls.querySelectorAll('button:not(#btn-fold)')) {
+        if (getComputedStyle(b).display === 'none' || !b.title) continue;
+        const dt = document.createElement('dt');
+        dt.textContent = b.textContent;
+        const dd = document.createElement('dd');
+        dd.textContent = b.title.replace(/^[^：:]+[：:]\s*/, '');
+        list.append(dt, dd);
+      }
+      $('guide-h').textContent = T.guideHead;
+      $('guide-note').textContent = touch ? T.guideNoteTouch : T.guideNote;
+      $('guide-close').textContent = T.guideClose;
+      if (api.gentenOpen()) return; // 原典帖已開，不疊模態；下次再導
+      guideReturnFocus = document.activeElement;
+      $('guide').classList.remove('hidden');
+      $('guide').setAttribute('aria-hidden', 'false');
+      h.onGuide?.(true);
+      $('guide-close').focus();
+    },
   };
   return api;
 }
