@@ -7,7 +7,7 @@
 
 依書逐席校對之工作頁在 **[兩界現圖校對頁](book.html)**：每席附名位、形相及書頁出典，畫布上的尊形、標幟均為程序繪製之示意，供內部對照，不是壇城本體。舊址 `engine.html` 自動轉至首頁。
 
-**線上即入壇 → https://hosuke.github.io/mandala/**
+**線上即入壇 → https://mandala.oneness.ren/**
 
 或於本地起任一靜態服務：
 
